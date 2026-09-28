@@ -97,6 +97,8 @@ footer{padding:64px 0 40px;color:var(--muted);font-size:14px}
   <a class="brand" href="#"><span>CNASS</span> × STARTAI</a>
   <a class="l" href="#etapes">Étapes</a>
   <a class="l" href="#borne">Borne 3D</a>
+  <a class="l" href="#designs">Designs</a>
+  <a class="l" href="#dimensions">Dimensions</a>
   <a class="l" href="#materiel">Matériel</a>
   <a class="l" href="#documents">Documents</a>
   <a class="out" href="/api/logout">Se déconnecter</a>
@@ -144,11 +146,36 @@ footer{padding:64px 0 40px;color:var(--muted);font-size:14px}
     <a class="open3d" href="borne.html" target="_blank" rel="noopener">Ouvrir la maquette en plein écran</a>
   </section>
 
+
+  <section id="designs">
+    <h2>Trois designs de borne</h2>
+    <p class="sub">Trois propositions avec les mêmes équipements : une colonne compacte, un pupitre accessible assis ou debout, et un totem premium. Choisissez un design en haut de la maquette.</p>
+    <div class="viewer"><iframe src="designs.html" title="Trois designs de borne en 3D" loading="lazy"></iframe></div>
+    <a class="open3d" href="designs.html" target="_blank" rel="noopener">Ouvrir les designs en plein écran</a>
+  </section>
+
+  <section id="dimensions">
+    <h2>Dimensions des équipements</h2>
+    <p class="sub">Cotes des fiches constructeur. L = largeur, P = profondeur (de l'avant vers l'arrière), H = hauteur.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Équipement</th><th>Largeur (L)</th><th>Profondeur (P)</th><th>Hauteur (H)</th><th>Poids</th><th>Remarque</th></tr></thead>
+      <tbody>
+        <tr><td><b>Écran tactile iiyama TF1534MC-B7X</b></td><td class="h">337,5 mm</td><td class="h">44,5 mm</td><td class="h">265,5 mm</td><td>2,7&nbsp;kg</td><td>Fixation VESA 100, découpe façade ≈ 310 × 235 mm</td></tr>
+        <tr><td><b>Caméra Logitech C920 PRO HD</b></td><td class="h">94 mm</td><td class="h">24 mm</td><td class="h">29 mm</td><td>162&nbsp;g</td><td>Avec clip : P 71 mm, H 43,3 mm</td></tr>
+        <tr><td><b>NVIDIA Jetson Orin NX (Yahboom)</b></td><td class="h">100 mm</td><td class="h">79 mm</td><td class="h">21 mm</td><td>—</td><td>Prévoir ≈ 10 cm au-dessus pour les antennes Wi-Fi</td></tr>
+        <tr><td><b>Imprimante Canon i-SENSYS MF3010</b></td><td class="h">372 mm</td><td class="h">276 mm</td><td class="h">254 mm</td><td>8,2&nbsp;kg</td><td>Dégager le haut (capot) et l'avant (sortie papier)</td></tr>
+        <tr><td><b>Onduleur APC Back-UPS BX500MI</b></td><td class="h">98 mm</td><td class="h">310 mm</td><td class="h">138 mm</td><td>4,2&nbsp;kg</td><td>Posé tourné : occupe 310 mm en largeur, 98 mm en profondeur</td></tr>
+        <tr><td><b>Ventilateur ARCTIC P8 (× 2)</b></td><td class="h">80 mm</td><td class="h">25 mm</td><td class="h">80 mm</td><td>81&nbsp;g</td><td>Entraxe de fixation 71,5 mm</td></tr>
+        <tr><td><b>Multiprise interne</b></td><td class="h">≈ 260 mm</td><td class="h">≈ 45 mm</td><td class="h">≈ 45 mm</td><td>—</td><td>Modèle générique, cotes indicatives</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
   <section id="materiel">
     <h2>Le matériel</h2>
-    <p class="sub">Chaque composant, sa place dans la borne et son alimentation. Prix indicatifs, à confirmer localement.</p>
+    <p class="sub">Chaque composant, sa place dans la borne et son alimentation.</p>
     <div class="tbl-wrap"><table>
-      <thead><tr><th>Composant</th><th>Rôle</th><th>Emplacement</th><th>Hauteur</th><th>Alimentation</th><th>Prix</th></tr></thead>
+      <thead><tr><th>Composant</th><th>Rôle</th><th>Emplacement</th><th>Hauteur dans la borne</th><th>Alimentation</th></tr></thead>
       <tbody id="parts"></tbody>
     </table></div>
   </section>
@@ -159,6 +186,7 @@ footer{padding:64px 0 40px;color:var(--muted);font-size:14px}
     <div class="docs">
       <a class="doc" href="CNASS_STARTAI_Presentation.pptx" download><span class="ic" style="background:#C8522B">PPT</span><span><b>Présentation de la solution</b><small>16 diapositives, avec notes d'orateur</small></span></a>
       <a class="doc" href="borne.html" target="_blank" rel="noopener"><span class="ic" style="background:var(--purple)">3D</span><span><b>Maquette de la borne</b><small>Implantation des composants</small></span></a>
+      <a class="doc" href="designs.html" target="_blank" rel="noopener"><span class="ic" style="background:var(--orange)">3D</span><span><b>Trois designs de borne</b><small>Colonne, Pupitre, Totem Premium</small></span></a>
     </div>
   </section>
 </main>
@@ -206,7 +234,7 @@ function render({etapes, composants}){
   document.getElementById('bar').innerHTML = [['realise','var(--ok)'],['en_cours','var(--doing)'],['a_venir','var(--todo)']]
     .map(([s,c])=>`<span style="width:${cnt(s)/n*100}%;background:${c}"></span>`).join('');
   document.getElementById('parts').innerHTML = composants.map(c=>
-    `<tr><td><b>${c.lien?`<a href="${esc(c.lien)}" target="_blank" rel="noopener">${esc(c.nom)}</a>`:esc(c.nom)}</b></td><td>${esc(c.role)}</td><td>${esc(c.emplacement)}</td><td class="h">${esc(c.hauteur)}</td><td>${esc(c.alimentation)}</td><td>${esc(c.prix)}</td></tr>`).join('');
+    `<tr><td><b>${c.lien?`<a href="${esc(c.lien)}" target="_blank" rel="noopener">${esc(c.nom)}</a>`:esc(c.nom)}</b></td><td>${esc(c.role)}</td><td>${esc(c.emplacement)}</td><td class="h">${esc(c.hauteur)}</td><td>${esc(c.alimentation)}</td></tr>`).join('');
 }
 
 async function load(){

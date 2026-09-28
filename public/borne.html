@@ -89,7 +89,7 @@ li.open .row b{color:var(--purple)}
   <div class="stage" id="stage">
     <canvas id="c" aria-label="Maquette 3D de la borne CNASS"></canvas>
     <div id="labels"></div>
-    <div class="title"><h1>Borne CNASS autonome</h1><p>Équipements à leurs dimensions constructeur. Faites tourner, touchez un nom.</p></div>
+    <div class="title"><h1>Borne CNASS autonome</h1><p>Prototype en bois, équipements à leurs dimensions constructeur. Faites tourner, touchez un nom.</p></div>
     <div class="bar">
       <div class="seg" role="group" aria-label="Vue">
         <button data-v="closed" aria-pressed="false">Fermée</button>
@@ -107,7 +107,7 @@ li.open .row b{color:var(--purple)}
     <ul class="parts" id="parts"></ul>
 
     <h3>Cotes de la borne (mm)</h3>
-    <p class="lead" style="margin-bottom:10px">Valeurs provisoires. Remplacez-les par vos mesures : la maquette et les vérifications se recalculent.</p>
+    <p class="lead" style="margin-bottom:10px">Prototype en bois (panneaux de 18 mm). Valeurs provisoires. Remplacez-les par vos mesures : la maquette et les vérifications se recalculent.</p>
     <div class="form" id="form"></div>
 
     <h3>Vérification d'encombrement</h3>
@@ -179,8 +179,8 @@ floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
 
 // ---------- Matériaux ----------
 const M = {
-  shell: new THREE.MeshPhysicalMaterial({ color:0xF3F3F6, roughness:.42, clearcoat:.35, clearcoatRoughness:.3 }),
-  base:  new THREE.MeshStandardMaterial({ color:0xD9DAE2, roughness:.55 }),
+  shell: null,
+  base: null,
   inner: new THREE.MeshStandardMaterial({ color:0xB8BAC6, roughness:.6, metalness:.2 }),
   black: new THREE.MeshStandardMaterial({ color:0x17171B, roughness:.45 }),
   dark:  new THREE.MeshStandardMaterial({ color:0x2A2A31, roughness:.35, metalness:.1 }),
@@ -194,13 +194,30 @@ const M = {
   strip: new THREE.MeshStandardMaterial({ color:0xEEEEF0, roughness:.6 }),
   cable: new THREE.MeshStandardMaterial({ color:0x121216, roughness:.8 }),
 };
+
+function woodTex(base, dark, seed){
+  const w=1024,h=1024,c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d');
+  g.fillStyle=base; g.fillRect(0,0,w,h);
+  let r=seed; const rnd=()=>{ r=(r*16807)%2147483647; return r/2147483647; };
+  for(let i=0;i<260;i++){ const x=rnd()*w, amp=4+rnd()*14, fr=0.004+rnd()*0.01, ph=rnd()*6.28;
+    g.strokeStyle=dark; g.globalAlpha=0.04+rnd()*0.12; g.lineWidth=0.6+rnd()*2.4; g.beginPath();
+    for(let y=0;y<=h;y+=8){ const xx=x+Math.sin(y*fr+ph)*amp; y? g.lineTo(xx,y) : g.moveTo(xx,y); } g.stroke(); }
+  for(let k=0;k<5;k++){ const cx=rnd()*w, cy=rnd()*h, rr=8+rnd()*16; g.globalAlpha=0.18; g.fillStyle=dark; g.beginPath(); g.ellipse(cx,cy,rr*0.6,rr*1.6,0,0,7); g.fill(); }
+  g.globalAlpha=1; const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.wrapS=t.wrapT=THREE.RepeatWrapping; t.anisotropy=8; return t;
+}
+M.shell = new THREE.MeshStandardMaterial({ map: woodTex('#C9A477','#7A5230',7), roughness:.62, metalness:0 });
+M.base  = new THREE.MeshStandardMaterial({ map: woodTex('#9C7650','#4E321C',13), roughness:.7, metalness:0 });
+M.inner = new THREE.MeshStandardMaterial({ map: woodTex('#D8BC92','#8A6440',21), roughness:.7, metalness:0 });
 function tex(w,h,draw){ const c=document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t; }
 const T = {
   ui: tex(1024,768,(x,w,h)=>{ x.fillStyle='#F7F7FA'; x.fillRect(0,0,w,h); x.fillStyle='#5B2BB5'; x.font='800 54px Barlow, Arial, sans-serif'; x.fillText('CNASS',48,86);
     x.fillStyle='#1B1830'; x.textAlign='center'; x.font='700 50px Barlow, Arial, sans-serif'; x.fillText('Entrez votre numéro CNASS',w/2,210);
     x.strokeStyle='#C9C6D8'; x.lineWidth=4; x.strokeRect(312,245,400,70);
     ['1','2','3','4','5','6','7','8','9','⌫','0','✓'].forEach((k,i)=>{ const cx=372+(i%3)*140, cy=350+Math.floor(i/3)*98; x.fillStyle=k==='✓'?'#3FA35C':'#ECEBF3'; x.fillRect(cx-58,cy,116,84); x.fillStyle=k==='✓'?'#fff':'#1B1830'; x.font='700 44px Barlow, Arial, sans-serif'; x.fillText(k,cx,cy+58); }); }),
-  band: tex(1024,390,(g,w,h)=>{ g.fillStyle='#5B2BB5'; g.fillRect(0,0,w,h); g.fillStyle='#fff'; g.textAlign='center'; g.font='600 140px "Segoe UI", Tahoma, Arial, sans-serif'; g.fillText('مرحبا بكم',w/2,165); g.font='700 132px "Barlow Condensed", Arial, sans-serif'; g.fillText('BIENVENUE',w/2,330); }),
+  band: tex(1024,420,(g,w,h)=>{ g.fillStyle='#5B2BB5'; g.fillRect(0,0,w,h); g.fillStyle='#fff'; g.textAlign='center';
+    const fit=(txt,font,size,y)=>{ let s=size; do{ g.font=font.replace('S',s+'px'); s-=2; } while(g.measureText(txt).width>w-80 && s>20); g.fillText(txt,w/2,y); };
+    fit('مرحبا بك في الوكيل الآلي','600 S "Segoe UI", Tahoma, Arial, sans-serif',120,175);
+    fit("BIENVENUE À L'AGENT AUTOMATIQUE",'700 S "Barlow Condensed", Arial Narrow, Arial, sans-serif',96,330); }),
   slot: tex(512,200,(g,w,h)=>{ g.fillStyle='#ECEAF4'; g.fillRect(0,0,w,h); g.fillStyle='#5B2BB5'; g.textAlign='center'; g.font='600 34px Barlow, Arial, sans-serif'; g.fillText('Feuille de soins A4',w/2,165); }),
   logo: tex(512,128,(g,w,h)=>{ g.clearRect(0,0,w,h); g.fillStyle='#E8903A'; g.beginPath(); g.arc(40,64,14,0,7); g.fill(); g.fillStyle='#5B2BB5'; g.font='800 84px Barlow, Arial, sans-serif'; g.fillText('CNASS',66,94); }),
 };
@@ -239,7 +256,7 @@ function build(){
   const head = new THREE.Mesh(hg, M.shell); head.castShadow = head.receiveShadow = true; shell.add(head);
   shell.traverse(o=>{ if(o.isMesh) shellMeshes.push(o); });
   // décors façade
-  const band = plane(W-0.02, 0.15, new THREE.MeshBasicMaterial({map:T.band, transparent:true})); band.position.set(0, H1-0.1, D/2+0.0015); shell.add(band); decals.push(band);
+  const band = plane(W-0.02, 0.164, new THREE.MeshBasicMaterial({map:T.band, transparent:true})); band.position.set(0, H1-0.1, D/2+0.0015); shell.add(band); decals.push(band);
   // grilles d'aération latérales
   [[-1,H1-0.16],[1,H1-0.16],[-1,B+0.2],[1,B+0.2]].forEach(([s,y])=>{ for(let i=0;i<6;i++){ const v = box(0.002,0.007,0.15,M.black); v.castShadow=false; v.position.set(s*(W/2+0.001), y+i*0.016-0.04, -0.03); shell.add(v); decals.push(v);} });
 
