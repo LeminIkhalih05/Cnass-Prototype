@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CNASS Prototype : vérification faciale au point de soins</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Suivi du projet CNASS × STARTAI : étapes, borne autonome en 3D, matériel et documents.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F3F6; --panel:#FFFFFF; --ink:#1B1830; --muted:#5E5A72; --rule:#DCDDE5;
+  --purple:#5B2BB5; --purple-deep:#2A1260; --purple-soft:#ECE6FA; --orange:#E8903A;
+  --ok:#2E9E5A; --doing:#E8903A; --todo:#8C8FA3;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#15131C; --panel:#1F1C29; --ink:#F1EFF7; --muted:#A7A2BA; --rule:#322E3E; --purple:#9D7BF0; --purple-soft:#2B2340; } }
+:root[data-theme="dark"]{ --bg:#15131C; --panel:#1F1C29; --ink:#F1EFF7; --muted:#A7A2BA; --rule:#322E3E; --purple:#9D7BF0; --purple-soft:#2B2340; }
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:calc(64px + env(safe-area-inset-top,0px))}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 Barlow,"Segoe UI",Arial,sans-serif}
+a{color:var(--purple)}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+nav .wrap{display:flex;align-items:center;gap:24px;height:60px}
+.brand{font:700 20px "Barlow Condensed",Arial,sans-serif;color:var(--ink);text-decoration:none;margin-right:auto}
+.brand span{color:var(--purple)}
+nav a.l{color:var(--muted);text-decoration:none;font-weight:500}
+nav a.l:hover{color:var(--ink)}
+.out{font-size:14px;font-weight:600;color:var(--purple);text-decoration:none;border:1px solid var(--rule);border-radius:99px;padding:6px 14px}
+.out:hover{background:var(--purple-soft)}
+header.hero{background:var(--purple-deep);color:#fff;overflow:hidden;position:relative}
+.hero .wrap{padding-top:72px;padding-bottom:64px;display:grid;grid-template-columns:1.3fr 1fr;gap:48px;align-items:end}
+.hero h1{font:700 clamp(40px,6vw,72px)/.95 "Barlow Condensed",Arial,sans-serif;margin:0}
+.hero p{font-size:19px;color:#D9CCFB;max-width:34ch;margin:20px 0 0}
+.flow{display:flex;gap:10px;align-items:center;margin-top:32px;flex-wrap:wrap}
+.flow b{background:#fff;color:var(--purple-deep);border-radius:999px;padding:6px 14px;font-weight:600}
+.flow em{font-style:normal;color:var(--orange);font-weight:700}
+.meter{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:22px}
+.meter .n{font:700 64px/1 "Barlow Condensed",Arial,sans-serif}
+.meter .t{color:#D9CCFB;margin-top:4px}
+.bar{height:10px;border-radius:99px;background:rgba(255,255,255,.14);margin-top:18px;overflow:hidden;display:flex}
+.bar span{height:100%}
+.legend{display:flex;gap:16px;margin-top:12px;font-size:13px;color:#D9CCFB;flex-wrap:wrap}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+section{padding:72px 0 8px}
+h2{font:700 38px/1 "Barlow Condensed",Arial,sans-serif;margin:0 0 8px}
+.sub{color:var(--muted);margin:0 0 32px;max-width:62ch}
+.lanes{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.lane h3{font:600 20px "Barlow Condensed",Arial,sans-serif;margin:0 0 14px;color:var(--purple)}
+ol.steps{list-style:none;margin:0;padding:0;position:relative}
+ol.steps::before{content:"";position:absolute;left:17px;top:6px;bottom:6px;width:2px;background:var(--rule)}
+.step{position:relative;display:grid;grid-template-columns:36px 1fr;gap:14px;padding:0 0 22px}
+.step .c{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 13px "Barlow Condensed",Arial,sans-serif;position:relative;z-index:1}
+.step h4{margin:4px 0 2px;font-size:17px;font-weight:600}
+.step p{margin:0;color:var(--muted);font-size:15px}
+.pill{font-size:12px;font-weight:600;border-radius:99px;padding:2px 9px;margin-left:8px;vertical-align:2px}
+.s-realise .c{background:var(--ok)} .s-realise .pill{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.s-en_cours .c{background:var(--doing)} .s-en_cours .pill{background:color-mix(in srgb,var(--doing) 18%,transparent);color:var(--doing)}
+.s-a_venir .c{background:var(--todo)} .s-a_venir .pill{background:color-mix(in srgb,var(--todo) 18%,transparent);color:var(--muted)}
+.viewer{border:1px solid var(--rule);border-radius:18px;overflow:hidden;background:var(--panel);height:min(78vh,760px)}
+.viewer iframe{width:100%;height:100%;border:0;display:block}
+.open3d{display:inline-block;margin-top:12px;font-weight:600}
+.arch{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--rule);border-radius:18px;overflow:hidden;background:var(--panel)}
+.arch div{padding:22px;border-right:1px solid var(--rule)}
+.arch div:last-child{border-right:0}
+.arch b{display:block;font:700 20px "Barlow Condensed",Arial,sans-serif;margin-bottom:6px}
+.arch small{color:var(--muted);font-size:14.5px;line-height:1.45;display:block}
+.arch .k{font-size:12px;color:var(--orange);font-weight:600;margin-bottom:10px;display:block}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:18px;background:var(--panel)}
+table{width:100%;border-collapse:collapse;min-width:760px;font-size:15px}
+th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:13px;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.h{white-space:nowrap;color:var(--purple);font-weight:600}
+.docs{display:flex;gap:16px;flex-wrap:wrap}
+.doc{display:flex;gap:14px;align-items:center;border:1px solid var(--rule);background:var(--panel);border-radius:14px;padding:16px 18px;text-decoration:none;color:var(--ink);min-width:280px}
+.doc .ic{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;color:#fff;font:700 13px "Barlow Condensed",Arial,sans-serif}
+.doc small{display:block;color:var(--muted)}
+footer{padding:64px 0 40px;color:var(--muted);font-size:14px}
+@media (max-width:860px){
+  .hero .wrap{grid-template-columns:1fr;padding-top:48px;gap:32px}
+  .lanes{grid-template-columns:1fr}
+  .arch{grid-template-columns:1fr 1fr}
+  .arch div:nth-child(2){border-right:0}
+  .arch div:nth-child(-n+2){border-bottom:1px solid var(--rule)}
+  nav a.l{display:none}
+}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <a class="brand" href="#"><span>CNASS</span> × STARTAI</a>
+  <a class="l" href="#etapes">Étapes</a>
+  <a class="l" href="#borne">Borne 3D</a>
+  <a class="l" href="#materiel">Matériel</a>
+  <a class="l" href="#documents">Documents</a>
+  <a class="out" href="/api/logout">Se déconnecter</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div>
+    <h1>Vérifier l'assuré avant le soin</h1>
+    <p>Une borne autonome compare le visage de la personne à l'empreinte liée à son matricule, puis imprime la feuille de soins officielle.</p>
+    <div class="flow"><b>Matricule</b><em>→</em><b>Visage</b><em>→</em><b>Décision</b><em>→</em><b>Feuille de soins</b></div>
+  </div>
+  <div class="meter" aria-live="polite">
+    <div class="n" id="pct">–</div>
+    <div class="t" id="pctText">des étapes réalisées</div>
+    <div class="bar" id="bar"></div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>Réalisé</span><span><i style="background:var(--doing)"></i>En cours</span><span><i style="background:var(--todo)"></i>À venir</span></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <section id="etapes">
+    <h2>Les étapes du projet</h2>
+    <p class="sub">Deux chantiers en parallèle : le logiciel de vérification et la borne physique. L'avancement est mis à jour en temps réel.</p>
+    <div class="lanes">
+      <div class="lane"><h3>Logiciel</h3><ol class="steps" id="lane-logiciel"></ol></div>
+      <div class="lane"><h3>Borne autonome</h3><ol class="steps" id="lane-borne"></ol></div>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <h2>Comment ça fonctionne</h2>
+    <p class="sub">Une couche de vérification au-dessus du système d'information CNASS, qui reste la seule source de vérité.</p>
+    <div class="arch">
+      <div><span class="k">Kiosque</span><b>Capture</b><small>Écran tactile, caméra et Jetson. Rien n'est conservé sur le terminal.</small></div>
+      <div><span class="k">Backend FastAPI</span><b>Orchestration</b><small>L'endpoint /api/verify reçoit le matricule et le visage.</small></div>
+      <div><span class="k">Moteur facial</span><b>Comparaison</b><small>Empreinte de 512 nombres, similarité cosinus, seuil 0,40.</small></div>
+      <div><span class="k">API CNASS</span><b>Identité et feuille</b><small>getAssureByMatricule et createFeuilleSoins, via le réseau CNASS.</small></div>
+    </div>
+  </section>
+
+  <section id="borne">
+    <h2>La borne en 3D</h2>
+    <p class="sub">Faites tourner la maquette et touchez un composant pour voir son emplacement, ses dimensions et sa consommation.</p>
+    <div class="viewer"><iframe src="borne.html" title="Maquette 3D de la borne CNASS" loading="lazy"></iframe></div>
+    <a class="open3d" href="borne.html" target="_blank" rel="noopener">Ouvrir la maquette en plein écran</a>
+  </section>
+
+  <section id="materiel">
+    <h2>Le matériel</h2>
+    <p class="sub">Chaque composant, sa place dans la borne et son alimentation. Prix indicatifs, à confirmer localement.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Composant</th><th>Rôle</th><th>Emplacement</th><th>Hauteur</th><th>Alimentation</th><th>Prix</th></tr></thead>
+      <tbody id="parts"></tbody>
+    </table></div>
+  </section>
+
+  <section id="documents">
+    <h2>Documents</h2>
+    <p class="sub">À télécharger pour les réunions avec la CNASS.</p>
+    <div class="docs">
+      <a class="doc" href="CNASS_STARTAI_Presentation.pptx" download><span class="ic" style="background:#C8522B">PPT</span><span><b>Présentation de la solution</b><small>16 diapositives, avec notes d'orateur</small></span></a>
+      <a class="doc" href="borne.html" target="_blank" rel="noopener"><span class="ic" style="background:var(--purple)">3D</span><span><b>Maquette de la borne</b><small>Implantation des composants</small></span></a>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap">CNASS Prototype, STARTAI. Document de travail confidentiel.</div></footer>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const FALLBACK = {
+  etapes: [
+    {code:'T1',titre:"Base d'empreintes",description:'PostgreSQL déployé : vecteurs 512D indexés par matricule.',phase:'logiciel',statut:'realise',ordre:1},
+    {code:'T2',titre:'Calcul des empreintes',description:'Microservice InsightFace et enrôlement automatique par tâche planifiée.',phase:'logiciel',statut:'realise',ordre:2},
+    {code:'T3',titre:'Intégration API CNASS',description:'getAssureByMatricule et createFeuilleSoins branchés.',phase:'logiciel',statut:'realise',ordre:3},
+    {code:'T4',titre:'Moteur sur terminal Jetson',description:'Vérification exécutée sur le Jetson Orin NX.',phase:'logiciel',statut:'en_cours',ordre:4},
+    {code:'T5',titre:'Interface kiosque',description:'Parcours Numéro, Caméra, Terminé ; arabe et français ; audio.',phase:'logiciel',statut:'en_cours',ordre:5},
+    {code:'T6',titre:'Feuille de soins au terminal',description:'Impression A4 via Canon MF3010 et CUPS.',phase:'logiciel',statut:'a_venir',ordre:6},
+    {code:'T7',titre:'Sécurité du terminal',description:"Mode kiosque verrouillé, journal d'audit, détection du vivant.",phase:'logiciel',statut:'a_venir',ordre:7},
+    {code:'B1',titre:'Relevé des cotes',description:'Mesurer la borne existante (largeur intérieure, profondeur, découpes).',phase:'borne',statut:'a_venir',ordre:8},
+    {code:'B2',titre:'Plans 3D FreeCAD',description:'Assemblage avec les modèles STEP des composants, export DXF.',phase:'borne',statut:'a_venir',ordre:9},
+    {code:'B3',titre:'Découpes et aménagement',description:'Découpe écran 310 × 235 mm, fente A4, ouïes, étagères.',phase:'borne',statut:'a_venir',ordre:10},
+    {code:'B4',titre:'Intégration électrique',description:"Onduleur, multiprise, prise directe parafoudre pour l'imprimante.",phase:'borne',statut:'a_venir',ordre:11},
+    {code:'B5',titre:'Tests sur site pilote',description:'Essais en conditions réelles avec des assurés.',phase:'borne',statut:'a_venir',ordre:12},
+  ],
+  composants: [
+    {nom:'Écran tactile iiyama TF1534MC-B7X',role:'Interface utilisateur 15" 4:3',emplacement:'Tête inclinée à 24°',hauteur:'1,28 m',alimentation:'12 V, 10 W',prix:'≈ 500 € (Europe)'},
+    {nom:'Caméra USB 1080p WDR',role:'Capture du visage',emplacement:'Sommet de la tête, centrée',hauteur:'1,45 m',alimentation:'USB, 2 W',prix:'40 à 70 $'},
+    {nom:'Jetson Orin NX (Yahboom)',role:'Calcul et décision',emplacement:'Étagère derrière le bandeau',hauteur:'0,98 m',alimentation:"19 V, jusqu'à 40 W",prix:'à partir de 909 $'},
+    {nom:'Canon i-SENSYS MF3010',role:'Impression A4 de la feuille de soins',emplacement:'Étagère à mi-hauteur, fente A4',hauteur:'0,55 à 0,80 m',alimentation:'Prise directe, pointe 960 W',prix:'prix local à vérifier'},
+    {nom:'Onduleur APC Back-UPS BX500MI',role:'Secours Jetson, écran, caméra',emplacement:'Au sol, en travers du fût',hauteur:'0,15 m',alimentation:'300 W',prix:'60 à 90 €'},
+    {nom:'Ventilation 2 × 80 mm',role:'Refroidissement',emplacement:'Arrière : entrée basse, sortie haute',hauteur:'0,30 m / 0,95 m',alimentation:'12 V, 2 W',prix:'≈ 15 $'},
+    {nom:'Multiprise interne',role:'Distribution sortie onduleur',emplacement:'Paroi arrière',hauteur:'0,26 m',alimentation:'—',prix:'≈ 10 $'},
+  ]
+};
+const LABEL = {realise:'Réalisé',en_cours:'En cours',a_venir:'À venir'};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function render({etapes, composants}){
+  ['logiciel','borne'].forEach(ph=>{
+    document.getElementById('lane-'+ph).innerHTML = etapes.filter(e=>e.phase===ph).sort((a,b)=>a.ordre-b.ordre).map(e=>
+      `<li class="step s-${esc(e.statut)}"><span class="c">${esc(e.code)}</span><div><h4>${esc(e.titre)}<span class="pill">${LABEL[e.statut]||esc(e.statut)}</span></h4><p>${esc(e.description)}</p></div></li>`).join('');
+  });
+  const n = etapes.length || 1, cnt = s => etapes.filter(e=>e.statut===s).length;
+  document.getElementById('pct').textContent = Math.round(cnt('realise')/n*100)+' %';
+  document.getElementById('pctText').textContent = `des étapes réalisées (${cnt('realise')} sur ${etapes.length})`;
+  document.getElementById('bar').innerHTML = [['realise','var(--ok)'],['en_cours','var(--doing)'],['a_venir','var(--todo)']]
+    .map(([s,c])=>`<span style="width:${cnt(s)/n*100}%;background:${c}"></span>`).join('');
+  document.getElementById('parts').innerHTML = composants.map(c=>
+    `<tr><td><b>${c.lien?`<a href="${esc(c.lien)}" target="_blank" rel="noopener">${esc(c.nom)}</a>`:esc(c.nom)}</b></td><td>${esc(c.role)}</td><td>${esc(c.emplacement)}</td><td class="h">${esc(c.hauteur)}</td><td>${esc(c.alimentation)}</td><td>${esc(c.prix)}</td></tr>`).join('');
+}
+
+async function load(){
+  render(FALLBACK);
+  const cfg = window.CNASS_CONFIG || {};
+  if(!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY || !window.supabase) return;
+  try{
+    const db = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+    const [e, c] = await Promise.all([
+      db.from('etapes').select('*').order('ordre'),
+      db.from('composants').select('*').order('ordre')
+    ]);
+    if(e.error || c.error) throw (e.error || c.error);
+    render({etapes: e.data, composants: c.data});
+    db.channel('etapes-live').on('postgres_changes',{event:'*',schema:'public',table:'etapes'},async()=>{
+      const r = await db.from('etapes').select('*').order('ordre'); if(!r.error) render({etapes:r.data, composants:c.data});
+    }).subscribe();
+  }catch(err){
+    console.warn('Mise à jour en direct indisponible :', err);
+  }
+}
+load();
+</script>
+</body>
+</html>
