@@ -90,7 +90,7 @@ ul.pts li{margin:0 0 4px}
         <button data-v="explode" aria-pressed="false">Éclatée</button>
       </div>
       <button class="tog" id="tLabels" aria-pressed="true">Noms</button>
-      <button class="tog" id="tDims" aria-pressed="false">Cotes</button>
+      <button class="tog" id="tDims" aria-pressed="true">Cotes</button>
       <button class="tog" id="tHuman" aria-pressed="false">Silhouette 1,70 m</button>
     </div>
   </div>
@@ -120,19 +120,19 @@ const EQ = [
 const DESIGNS = {
   A: { key:'A', tab:'A · Colonne', sub:'Compacte, en bois', kicker:'DESIGN A', title:'Colonne',
        pitch:'La borne actuelle, rationalisée : une colonne compacte en contreplaqué avec tête inclinée. La plus simple à fabriquer localement et la moins chère.',
-       spec:[['Dimensions','420 × 320 × 1 480 mm'],['Emprise au sol','0,13 m²'],['Centre de l\'écran','1 275 mm, incliné à 24°'],['Caméra','1 488 mm, au sommet'],['Sortie A4','751 mm'],['Matériaux','Contreplaqué 18 mm, vernis chêne, bandeau imprimé'],['Maintenance','Porte arrière à serrure']],
+       spec:[['Largeur','480 mm hors-tout (socle) · fût 420 mm'],['Profondeur','400 mm hors-tout (socle) · fût 320 mm'],['Hauteur','1 515 mm avec caméra · caisson 1 480 mm'],['Emprise au sol','0,13 m²'],['Centre de l\'écran','1 275 mm, incliné à 24°'],['Caméra','1 488 mm, au sommet'],['Sortie A4','751 mm'],['Matériaux','Contreplaqué 18 mm, vernis chêne, bandeau imprimé'],['Maintenance','Porte arrière à serrure']],
        plus:['Fabrication simple : panneaux droits, une seule pièce inclinée','Faible emprise, se place dans un couloir','Coût le plus bas des trois'],
        minus:['Imprimante très juste en largeur (6 mm de chaque côté)','Écran trop haut pour une personne en fauteuil'],
        use:'Pilote et petits centres de santé.' },
   B: { key:'B', tab:'B · Pupitre', sub:'Accessible, assis ou debout', kicker:'DESIGN B', title:'Pupitre accessible',
        pitch:'Un pupitre bas et large, utilisable debout comme assis. L\'écran est incliné comme un bureau, la caméra et l\'éclairage visage sont portés par un mât avec l\'enseigne.',
-       spec:[['Dimensions','560 × 480 × 1 250 mm (mât 1 700 mm)'],['Emprise au sol','0,27 m²'],['Centre de l\'écran','1 030 mm, incliné à 35°'],['Caméra','1 510 mm sur mât, barre LED visage'],['Sortie A4','700 mm'],['Matériaux','Contreplaqué 18 mm, plateau stratifié, tablette porte-documents'],['Maintenance','Porte arrière pleine largeur']],
+       spec:[['Largeur','564 mm hors-tout (plateau) · caisson 560 mm'],['Profondeur','574 mm avec tablette · caisson 480 mm'],['Hauteur','1 800 mm avec enseigne · plateau à 1 212 mm'],['Emprise au sol','0,27 m²'],['Centre de l\'écran','1 030 mm, incliné à 35°'],['Caméra','1 510 mm sur mât, barre LED visage'],['Sortie A4','661 mm'],['Matériaux','Contreplaqué 18 mm, plateau stratifié, tablette porte-documents'],['Maintenance','Porte arrière pleine largeur']],
        plus:['Accessible aux personnes âgées et en fauteuil','Éclairage du visage intégré : meilleurs scores en salle sombre','Large volume intérieur, ventilation facile'],
        minus:['Emprise au sol doublée','Mât à fixer solidement au caisson'],
        use:'Centres avec beaucoup de patients âgés ou à mobilité réduite.' },
   C: { key:'C', tab:'C · Totem Premium', sub:'Image de marque', kicker:'DESIGN C', title:'Totem Premium',
        pitch:'Un totem haut aux angles arrondis, façade blanche et flancs bois, avec caisson lumineux en tête. Visible de loin, il porte l\'image de la CNASS.',
-       spec:[['Dimensions','480 × 380 × 1 800 mm'],['Emprise au sol','0,18 m²'],['Centre de l\'écran','1 330 mm, incliné à 15°'],['Caméra','1 530 mm, anneau LED'],['Sortie A4','905 mm, cadre métal'],['Matériaux','Contreplaqué 18 mm, façade stratifiée blanche, flancs chêne, chants arrondis'],['Maintenance','Porte arrière + trappe imprimante']],
+       spec:[['Largeur','502 mm avec flancs chêne · caisson 480 mm'],['Profondeur','471 mm avec écran en saillie · caisson 380 mm'],['Hauteur','1 800 mm'],['Emprise au sol','0,18 m²'],['Centre de l\'écran','1 330 mm, incliné à 15°'],['Caméra','1 530 mm, anneau LED'],['Sortie A4','901 mm, cadre métal'],['Matériaux','Contreplaqué 18 mm, façade stratifiée blanche, flancs chêne, chants arrondis'],['Maintenance','Porte arrière + trappe imprimante']],
        plus:['Très visible grâce au caisson lumineux','Finition haut de gamme, image moderne','Sortie A4 à hauteur de main, sans se baisser'],
        minus:['Fabrication exigeante (arrondis, stratifié)','Le plus cher des trois'],
        use:'Grands centres et agences à forte affluence.' },
@@ -234,7 +234,7 @@ function mkFan(){ const f=new THREE.Group();
 
 // ---------- Monde ----------
 let world=null, comps={}, shellMeshes=[], decals=[], dimsGroup=null, human=null, labels={};
-let design='A', view='closed', showLabels=true, showDims=false, showHuman=false;
+let design='A', view='closed', showLabels=true, showDims=true, showHuman=false;
 function clear(){ if(!world) return; Object.values(labels).forEach(l=>l.element.remove()); if(dimsGroup) dimsGroup.traverse(o=>{ if(o.isCSS2DObject) o.element.remove(); });
   world.traverse(o=>{ if(o.isMesh||o.isLine) o.geometry.dispose(); }); scene.remove(world); }
 function place(id, obj, pos, off, rotX=0){ const g=new THREE.Group(); g.add(obj); g.position.copy(pos); g.rotation.x=rotX; world.add(g);
@@ -257,15 +257,17 @@ function build(key){
   dimsGroup=new THREE.Group(); world.add(dimsGroup);
   const lm=new THREE.LineBasicMaterial({color:0xE8903A});
   const dl=(a,b,t,lp)=>{ dimsGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),lm)); const e=document.createElement('div'); e.className='dim'; e.textContent=t; const o=new CSS2DObject(e); o.position.copy(lp); dimsGroup.add(o); };
-  const {W,D,H,screenY,outY} = info, xr=W/2+.09;
-  dl(V(xr,0,-D/2),V(xr,H,-D/2),`${Math.round(H*1000)} mm`,V(xr+.02,H/2,-D/2));
-  dl(V(-W/2,.002,D/2+.12),V(W/2,.002,D/2+.12),`${Math.round(W*1000)} mm`,V(0,.03,D/2+.14));
-  dl(V(xr,.002,-D/2),V(xr,.002,D/2),`${Math.round(D*1000)} mm`,V(xr+.03,.03,0));
-  dl(V(-W/2-.09,0,0),V(-W/2-.09,screenY,0),`écran ${Math.round(screenY*1000)} mm`,V(-W/2-.11,screenY*.66,0));
-  dl(V(-W/2-.17,0,D/2),V(-W/2-.17,outY,D/2),`sortie A4 ${Math.round(outY*1000)} mm`,V(-W/2-.19,outY*.4,D/2));
+  const {screenY,outY} = info;
+  const bx=new THREE.Box3(); world.children.forEach(o=>{ if(o===dimsGroup||o.isCSS2DObject) return; const id=Object.keys(comps).find(k=>comps[k].g===o); if(['printer','jetson','ups','fans'].includes(id)) return; bx.expandByObject(o); });
+  const f=v=>Math.round(v*1000).toLocaleString('fr-FR'); const x0=bx.min.x, x1=bx.max.x, z0=bx.min.z, z1=bx.max.z, Hh=bx.max.y, xr=x1+.08;
+  dl(V(xr,0,z0),V(xr,Hh,z0),`Hauteur ${f(Hh)} mm`,V(xr+.02,Hh/2,z0));
+  dl(V(x0,.002,z1+.1),V(x1,.002,z1+.1),`Largeur ${f(x1-x0)} mm`,V((x0+x1)/2,.03,z1+.12));
+  dl(V(xr,.002,z0),V(xr,.002,z1),`Profondeur ${f(z1-z0)} mm`,V(xr+.03,.03,(z0+z1)/2));
+  dl(V(x0-.09,0,0),V(x0-.09,screenY,0),`écran ${f(screenY)} mm`,V(x0-.11,screenY*.66,0));
+  dl(V(x0-.17,0,z1-.12),V(x0-.17,outY,z1-.12),`sortie A4 ${f(outY)} mm`,V(x0-.19,outY*.4,z1-.12));
   setDims(showDims);
   // silhouette 1,70 m
-  human=new THREE.Group(); const hx=W/2+.42, hz=D/2+.28;
+  human=new THREE.Group(); const hx=info.W/2+.42, hz=info.D/2+.28;
   const legs=cyl(.13,.86,M.human,24); legs.position.y=.43; human.add(legs);
   const torso=box(.4,.6,.22,M.human,.09); torso.position.y=1.17; human.add(torso);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.11,24,16),M.human); head.position.y=1.59; human.add(head);
@@ -341,7 +343,7 @@ function buildC(){ const W=.48,D=.38,H=1.80,t=.018,B=.06,HB=.18, bodyTop=H-HB;
   const pY=.70, outY=pY+mm(254)-.053;
   const trim=box(.3,.05,.012,M.alu,.01); trim.position.set(-.02,outY,D/2+.004); world.add(trim);
   addDecal(plane(.24,.018,new THREE.MeshBasicMaterial({color:0x14121c,transparent:true}))).position.set(-.02,outY,D/2+.011);
-  vents(W,D,bodyTop-.2); vents(W,D,B+.2);
+  vents(W,D,bodyTop-.2,.0105); vents(W,D,B+.2,.0105);
   shelf(W-2*t,D-2*t,pY); const jY=pY+mm(254)+.07; shelf(W-2*t,(D-2*t)*.9,jY,-.015);
   place('jetson',mkJetson(),V(.03,jY,-.03),[.48,.12,.3]);
   place('printer',mkPrinter(),V(0,pY,D/2-t-mm(276)/2-.004),[-.55,.02,.45]);
@@ -350,12 +352,12 @@ function buildC(){ const W=.48,D=.38,H=1.80,t=.018,B=.06,HB=.18, bodyTop=H-HB;
   place('fans',fans,V(0,0,-D/2+t+mm(25)/2+.002),[0,0,-.45]);
   return { W, D, H, screenY:sY, outY, cam:{p:V(2.6,1.9,3.55),t:V(0,.93,.05)} }; }
 
-function vents(W,D,y){ [-1,1].forEach(s=>{ for(let i=0;i<6;i++){ const v=box(.002,.007,.15,M.black); v.castShadow=false; v.position.set(s*(W/2+.009),y+i*.016-.04,-.03); addDecal(v);} }); }
+function vents(W,D,y,ex=.001){ [-1,1].forEach(s=>{ for(let i=0;i<6;i++){ const v=box(.002,.007,.15,M.black); v.castShadow=false; v.position.set(s*(W/2+ex),y+i*.016-.04,-.03); addDecal(v);} }); }
 function shelf(w,d,y,z=0){ const s=box(w,.008,d,M.inner); s.position.set(0,y-.004,z); world.add(s); }
 
 // ---------- Panneau ----------
 function renderPanel(key){ const d=DESIGNS[key];
-  const cmp = [['Dimensions (mm)','420 × 320 × 1 480','560 × 480 × 1 250','480 × 380 × 1 800'],['Emprise','0,13 m²','0,27 m²','0,18 m²'],['Écran (centre)','1 275 mm','1 030 mm','1 330 mm'],['Accessibilité PMR','Moyenne','Très bonne','Moyenne'],['Signalétique','Bandeau','Enseigne sur mât','Caisson lumineux'],['Fabrication','Simple','Moyenne','Exigeante'],['Budget','€','€€','€€€']];
+  const cmp = [['Largeur hors-tout','480 mm','564 mm','502 mm'],['Profondeur hors-tout','400 mm','574 mm','471 mm'],['Hauteur hors-tout','1 515 mm','1 800 mm','1 800 mm'],['Emprise','0,13 m²','0,27 m²','0,18 m²'],['Écran (centre)','1 275 mm','1 030 mm','1 330 mm'],['Accessibilité PMR','Moyenne','Très bonne','Moyenne'],['Signalétique','Bandeau','Enseigne sur mât','Caisson lumineux'],['Fabrication','Simple','Moyenne','Exigeante'],['Budget','€','€€','€€€']];
   const col = {A:1,B:2,C:3}[key];
   document.getElementById('panel').innerHTML = `
     <p class="kicker">${d.kicker}</p><h2>${d.title}</h2><p class="pitch">${d.pitch}</p>
@@ -402,7 +404,7 @@ function tick(){ requestAnimationFrame(tick); const k=reduce?1:.12;
   if(fly){ fly.k=Math.min(1,fly.k+(reduce?1:.045)); const e=1-Math.pow(1-fly.k,3); cam.position.lerpVectors(fly.p0,fly.p1,e); controls.target.lerpVectors(fly.t0,fly.t1,e); if(fly.k>=1) fly=null; }
   controls.update(); renderer.render(scene,cam); labelR.render(scene,cam); }
 cam.position.set(0,0,0); resize(); setDesign('A'); tick();
-window.__k = { setDesign, applyView, setLabels:v=>{showLabels=v;}, setHuman:v=>{showHuman=v; if(human) human.visible=v;}, setDims:v=>{showDims=v; setDims(v);} };
+window.__k = { bbox:()=>{ const b=new THREE.Box3(); world.children.forEach(o=>{ if(o===human||o===dimsGroup||o.isCSS2DObject) return; if(['printer','jetson','ups','fans'].includes(Object.keys(comps).find(k=>comps[k].g===o))) return; b.expandByObject(o); }); return [b.min.x,b.max.x,b.min.y,b.max.y,b.min.z,b.max.z].map(v=>Math.round(v*1000)); }, setDesign, applyView, setLabels:v=>{showLabels=v;}, setHuman:v=>{showHuman=v; if(human) human.visible=v;}, setDims:v=>{showDims=v; setDims(v);} };
 </script>
 </body>
 </html>

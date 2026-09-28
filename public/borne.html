@@ -382,9 +382,9 @@ function build(){
   const dimLine = (a,b,text,lp) => { const g = new THREE.BufferGeometry().setFromPoints([a,b]); dimsGroup.add(new THREE.Line(g,lm));
     const e = document.createElement('div'); e.className='dim'; e.textContent = text; const o = new CSS2DObject(e); o.position.copy(lp); dimsGroup.add(o); };
   const xR = W/2+0.08, zF = D/2+0.06;
-  dimLine(new THREE.Vector3(xR,0,-D/2), new THREE.Vector3(xR,H,-D/2), `${K.H} mm`, new THREE.Vector3(xR+0.02,H/2,-D/2));
-  dimLine(new THREE.Vector3(-W/2,0.002,zF+0.05), new THREE.Vector3(W/2,0.002,zF+0.05), `${K.W} mm`, new THREE.Vector3(0,0.03,zF+0.07));
-  dimLine(new THREE.Vector3(xR,0.002,-D/2), new THREE.Vector3(xR,0.002,D/2), `${K.D} mm`, new THREE.Vector3(xR+0.03,0.03,0));
+  dimLine(new THREE.Vector3(xR,0,-D/2), new THREE.Vector3(xR,H,-D/2), `Hauteur ${K.H} mm`, new THREE.Vector3(xR+0.02,H/2,-D/2));
+  dimLine(new THREE.Vector3(-W/2,0.002,zF+0.05), new THREE.Vector3(W/2,0.002,zF+0.05), `Largeur ${K.W} mm`, new THREE.Vector3(0,0.03,zF+0.07));
+  dimLine(new THREE.Vector3(xR,0.002,-D/2), new THREE.Vector3(xR,0.002,D/2), `Profondeur ${K.D} mm`, new THREE.Vector3(xR+0.03,0.03,0));
   dimLine(new THREE.Vector3(-W/2-0.08,0,0), new THREE.Vector3(-W/2-0.08,SC.y,0), `centre écran ${Math.round(SC.y*1000)} mm`, new THREE.Vector3(-W/2-0.1,SC.y*0.62,0));
   dimLine(new THREE.Vector3(-W/2-0.16,0,D/2), new THREE.Vector3(-W/2-0.16,pShelfY+mm(254)-0.053,D/2), `sortie A4 ${Math.round((pShelfY+mm(254)-0.053)*1000)} mm`, new THREE.Vector3(-W/2-0.18,0.38,D/2));
   setDimsVisible(showDims);
