@@ -1,0 +1,7 @@
+{
+  "name": "cnass-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Suivi du projet de vérification faciale CNASS × STARTAI",
+  "scripts": { "build": "echo 'site statique, rien à compiler'" }
+}
