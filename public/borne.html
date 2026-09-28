@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Borne CNASS : implantation du matériel en 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EBEF; --panel:#FFFFFF; --ink:#1B1830; --muted:#5E5A72; --rule:#D9DBE3;
+  --purple:#5B2BB5; --purple-soft:#EEE8FA; --orange:#E8903A; --focus:#E8903A;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#17151F; --panel:#211E2C; --ink:#F1EFF7; --muted:#A7A2BA; --rule:#34303F; --purple:#9D7BF0; --purple-soft:#2D2542; }
+}
+:root[data-theme="dark"]{ --bg:#17151F; --panel:#211E2C; --ink:#F1EFF7; --muted:#A7A2BA; --rule:#34303F; --purple:#9D7BF0; --purple-soft:#2D2542; }
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:400 15px/1.5 Barlow,"Segoe UI",Arial,sans-serif}
+.app{display:grid;grid-template-columns:1fr 400px;height:100%}
+.stage{position:relative;overflow:hidden;min-height:0}
+#c{display:block;width:100%;height:100%;touch-action:none}
+.title{position:absolute;left:24px;top:20px;pointer-events:none;max-width:60%}
+.title h1{margin:0;font:700 34px/1.02 "Barlow Condensed",Arial Narrow,Arial,sans-serif;letter-spacing:.01em}
+.title p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.views{position:absolute;left:24px;bottom:22px;display:flex;gap:0;background:var(--panel);border:1px solid var(--rule);border-radius:999px;padding:4px}
+.views button{border:0;background:transparent;color:var(--ink);font:600 14px Barlow,Arial,sans-serif;padding:8px 14px;border-radius:999px;cursor:pointer}
+.views button[aria-pressed="true"]{background:var(--purple);color:#fff}
+.reset{position:absolute;right:20px;bottom:22px;border:1px solid var(--rule);background:var(--panel);color:var(--ink);font:500 13px Barlow,Arial,sans-serif;padding:8px 12px;border-radius:999px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.tag{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;border:2px solid #fff;color:#fff;font:700 13px "Barlow Condensed",Arial,sans-serif;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 8px rgba(20,10,40,.35);padding:0}
+.tag.on{width:32px;height:32px;font-size:15px}
+aside{background:var(--panel);border-left:1px solid var(--rule);overflow-y:auto;padding:24px 24px 32px}
+aside h2{font:700 22px/1.1 "Barlow Condensed",Arial,sans-serif;margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 18px;font-size:14px}
+.parts{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.parts li{border-bottom:1px solid var(--rule)}
+.row{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;width:100%;background:none;border:0;color:inherit;text-align:left;padding:12px 2px;cursor:pointer;font:inherit}
+.dot{width:22px;height:22px;border-radius:50%;color:#fff;font:700 12px "Barlow Condensed",Arial,sans-serif;display:grid;place-items:center}
+.row b{font-weight:600;display:block;line-height:1.25}
+.row small{color:var(--muted);font-size:13px}
+.h{font:600 13px "Barlow Condensed",Arial,sans-serif;color:var(--purple);white-space:nowrap}
+.detail{display:none;padding:0 2px 16px 34px;font-size:14px}
+li.open .detail{display:block}
+li.open .row b{color:var(--purple)}
+.detail p{margin:0 0 10px;max-width:62ch}
+.spec{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 10px}
+.spec dt{color:var(--muted)}
+.spec dd{margin:0}
+.detail a{color:var(--purple);font-weight:600}
+.note{background:var(--purple-soft);border-radius:10px;padding:10px 12px;margin:0 0 10px}
+.power{margin-top:26px}
+.power h3,.budget h3{font:700 18px "Barlow Condensed",Arial,sans-serif;margin:0 0 8px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl td{padding:6px 0;border-bottom:1px solid var(--rule)}
+.tbl td:last-child{text-align:right;white-space:nowrap}
+.tbl tr.sum td{font-weight:600;border-bottom:0}
+.budget{margin-top:26px}
+.fine{color:var(--muted);font-size:12.5px;margin-top:10px}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr;grid-template-rows:60vh auto;height:auto}
+  .stage{height:60vh}
+  aside{border-left:0;border-top:1px solid var(--rule);overflow:visible}
+  .title h1{font-size:26px}
+  .title p{display:none}
+  .views{left:12px;bottom:12px}
+  .views button{padding:7px 10px;font-size:13px}
+  .reset{right:12px;bottom:12px}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage" id="stage">
+    <canvas id="c" aria-label="Maquette 3D de la borne CNASS avec ses composants"></canvas>
+    <div class="title">
+      <h1>Borne CNASS autonome</h1>
+      <p>Implantation du matériel à l'échelle réelle. Faites tourner la borne, touchez un composant.</p>
+    </div>
+    <div id="tags"></div>
+    <div class="views" role="group" aria-label="Mode d'affichage">
+      <button data-v="closed" aria-pressed="false">Fermée</button>
+      <button data-v="xray" aria-pressed="true">Transparente</button>
+      <button data-v="explode" aria-pressed="false">Éclatée</button>
+    </div>
+    <button class="reset" id="reset">Recentrer</button>
+  </div>
+  <aside>
+    <h2>Composants et emplacements</h2>
+    <p class="lead">Chaque élément a sa zone : l'interface en haut, le calcul au milieu, l'impression A4 à mi-hauteur, l'énergie au sol pour la stabilité.</p>
+    <ul class="parts" id="parts"></ul>
+
+    <section class="power">
+      <h3>Bilan électrique</h3>
+      <table class="tbl">
+        <tr><td>Écran tactile 15"</td><td>10 W</td></tr>
+        <tr><td>Jetson Orin NX (usage courant)</td><td>15 à 25 W</td></tr>
+        <tr><td>Caméra USB et ventilateurs</td><td>4 W</td></tr>
+        <tr class="sum"><td>Sur onduleur</td><td>≈ 30 à 40 W</td></tr>
+        <tr><td>Canon MF3010 en impression</td><td>≈ 450 W, pointe ≈ 960 W</td></tr>
+        <tr class="sum"><td>Imprimante, prise directe</td><td>≈ 1,4 W en veille</td></tr>
+      </table>
+      <p class="fine">En cas de coupure, la vérification faciale continue sur onduleur et l'application doit afficher « Impression momentanément indisponible ». Brancher la laser sur l'onduleur imposerait un modèle d'au moins 1 200 VA, trop long pour le fût et plus cher.</p>
+    </section>
+
+    <section class="budget">
+      <h3>Budget matériel indicatif</h3>
+      <table class="tbl">
+        <tr><td>Écran iiyama TF1534MC-B7X</td><td>selon lien, ≈ 500 € en Europe</td></tr>
+        <tr><td>Jetson Orin NX (Yahboom)</td><td>à partir de 909 $</td></tr>
+        <tr><td>Caméra USB 1080p WDR</td><td>40 à 70 $</td></tr>
+        <tr><td>Canon i-SENSYS MF3010 + cartouche 725</td><td>prix local à vérifier</td></tr>
+        <tr><td>Parafoudre pour l'imprimante</td><td>10 à 20 $</td></tr>
+        <tr><td>Onduleur APC BX500MI</td><td>60 à 90 €</td></tr>
+        <tr><td>Ventilation, multiprise, câbles</td><td>25 à 40 $</td></tr>
+      </table>
+      <p class="fine">Prix constatés en ligne, à confirmer auprès des fournisseurs locaux. Dimensions de la borne estimées d'après les photos : à mesurer avant découpe.</p>
+    </section>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+const PARTS = [
+  { id:"screen", n:1, color:"#5B2BB5", name:"Écran tactile iiyama 15\"", sub:"TF1534MC-B7X, format 4:3", h:"1,28 m",
+    text:"Monté dans la tête inclinée à 24°, face à l'utilisateur debout. Le format 4:3 tient dans la largeur de la tête avec plusieurs centimètres de marge.",
+    spec:[["Dimensions","337,5 × 265,5 × 44,5 mm"],["Zone active","304 × 228 mm"],["Fixation","VESA 100, cadre ouvert"],["Protection","IP65 en façade"],["Alimentation","12 V, 10 W"],["Liaison","HDMI + USB tactile vers le Jetson"]],
+    note:"La découpe actuelle de la façade est trop petite : prévoir environ 310 × 235 mm. Le second lien (TF1634MC, 15,6\" 16:9) mesure environ 38 cm de large, ce qui est trop juste pour cette tête.",
+    link:"https://www.amazon.ae/iiyama-ProLite-TF1534MC-B7X-touchscreen-DisplayPort/dp/B08Y5XBGFT?th=1" },
+  { id:"cam", n:2, color:"#E8903A", name:"Caméra USB 1080p WDR", sub:"Au-dessus de l'écran, centrée", h:"1,45 m",
+    text:"Placée au sommet de la tête pour être le plus près possible de la hauteur du visage. Une caméra à large dynamique (WDR) compense le contre-jour des salles d'attente.",
+    spec:[["Type","Module USB 1080p, WDR, 70 à 90° de champ"],["Position","Centrée au-dessus de l'écran, légèrement orientée vers le haut"],["Alimentation","USB, ≈ 2 W"]],
+    note:"Ajouter un éclairage LED doux au-dessus de l'écran améliore nettement les scores en salle sombre." },
+  { id:"jetson", n:3, color:"#76B900", name:"Jetson Orin NX (Yahboom)", sub:"Unité de calcul et de décision", h:"0,98 m",
+    text:"Sur une étagère dans le haut du fût, juste derrière le bandeau « Bienvenue », près de l'écran et de la caméra pour des câbles courts. Les ouïes latérales hautes évacuent sa chaleur.",
+    spec:[["Carte","≈ 100 × 80 mm + ventilateur"],["Alimentation","19 V obligatoire, jusqu'à ≈ 40 W"],["Réseau","Ethernet ou Wi-Fi intégré (antennes à sortir du caisson métallique)"],["Stockage","SSD M.2 selon le kit choisi"]],
+    link:"https://category.yahboom.net/fr/products/jetson-orin-nx" },
+  { id:"printer", n:4, color:"#2F80C9", name:"Canon i-SENSYS MF3010", sub:"Laser A4 monochrome, USB", h:"0,55 à 0,80 m",
+    text:"Posée sur une étagère à mi-hauteur. La feuille A4 sort par le bac supérieur, face à une fente de 24 cm découpée dans la façade à 0,77 m : la feuille de soins sort au format officiel, à hauteur de main.",
+    spec:[["Dimensions","372 × 276 × 254 mm, 8,2 kg"],["Consommation","≈ 1,4 W en veille, ≈ 450 W en impression, pointe ≈ 960 W"],["Température","10 à 30 °C de fonctionnement"],["Pilote Linux","Canon UFR II LT, paquet arm64 compatible Jetson (CUPS)"],["Consommable","Cartouche 725, ≈ 1 600 pages"]],
+    note:"Largeur 372 mm : elle ne rentre que si l'intérieur du fût fait au moins 38 cm. La maquette élargit le fût à 42 cm ; mesurez votre borne avant de découper. Ne pas la brancher sur l'onduleur : une prise directe avec parafoudre suffit. Prévoir une porte de service en façade pour recharger le papier." },
+  { id:"ups", n:5, color:"#3A3A42", name:"Onduleur APC Back-UPS BX500MI", sub:"500 VA / 300 W, line-interactive", h:"0,15 m",
+    text:"Posé au sol, en travers du fût : l'élément le plus lourd en bas abaisse le centre de gravité. Il ne secourt que le Jetson, l'écran et la caméra : l'imprimante laser (pointe ≈ 960 W) le mettrait en surcharge. Il filtre les variations du réseau et relie le Jetson en USB pour un arrêt propre en cas de coupure longue.",
+    spec:[["Dimensions","98 × 138 × 310 mm, 4,2 kg"],["Puissance","300 W (charge secourue ≈ 30 à 40 W, sans l'imprimante)"],["Autonomie estimée","≈ 20 à 30 min à 45 W"],["Pourquoi pas le BX750MI","355 mm de long : ne tient pas dans les 36 cm intérieurs du fût"]],
+    note:"Autonomie à confirmer avec le simulateur APC. Pour des coupures longues, un modèle à batterie plus grosse se placerait dans le socle agrandi." },
+  { id:"fans", n:6, color:"#8C8FA3", name:"Ventilation 2 × 80 mm", sub:"Entrée basse, sortie haute", h:"0,30 m / 0,95 m",
+    text:"L'air frais entre en bas à l'arrière, traverse le fût et ressort en haut, là où le Jetson chauffe. Des filtres anti-poussière sont conseillés, surtout en zone côtière ou sableuse.",
+    spec:[["Ventilateurs","2 × 80 mm, 12 V, silencieux"],["Filtres","Grilles avec mousse lavable"]] },
+  { id:"strip", n:7, color:"#C24E6B", name:"Multiprise interne", sub:"Sur la sortie de l'onduleur", h:"0,26 m",
+    text:"Fixée à la paroi arrière. Elle distribue la sortie protégée de l'onduleur vers les blocs d'alimentation : 19 V Jetson et 12 V écran. L'imprimante laser a sa propre prise directe avec parafoudre.",
+    spec:[["Sorties","4 prises, fixation par vis"],["Câblage","Goulotte verticale le long de la paroi arrière"]] },
+];
+
+const canvas = document.getElementById('c');
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(35,1,0.05,50);
+const HOME_POS = new THREE.Vector3(2.0,1.55,2.55), HOME_TGT = new THREE.Vector3(0,0.74,0.05);
+const EXP_POS = new THREE.Vector3(2.4,1.7,3.1);
+cam.position.copy(HOME_POS);
+const controls = new THREE.OrbitControls(cam, canvas);
+controls.target.copy(HOME_TGT);
+controls.enableDamping = true; controls.minDistance = 0.6; controls.maxDistance = 5; controls.maxPolarAngle = Math.PI*0.52;
+controls.update();
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x8a8aa0,0.75));
+const sun = new THREE.DirectionalLight(0xffffff,0.85);
+sun.position.set(1.5,3,2); sun.castShadow = true; sun.shadow.mapSize.set(1024,1024);
+Object.assign(sun.shadow.camera,{left:-1.2,right:1.2,top:2,bottom:-0.5,near:0.5,far:8});
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xffffff,0.3); fill.position.set(-2,1.5,-1); scene.add(fill);
+
+const floor = new THREE.Mesh(new THREE.CircleGeometry(1.6,64), new THREE.ShadowMaterial({opacity:0.18}));
+floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+const ring = new THREE.Mesh(new THREE.RingGeometry(1.2,1.205,96), new THREE.MeshBasicMaterial({color:0x9a96b0,transparent:true,opacity:.5}));
+ring.rotation.x = -Math.PI/2; ring.position.y = 0.001; scene.add(ring);
+
+const std = (c,o={}) => new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.55,metalness:.05},o));
+function box(w,h,d,mat){ const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.castShadow = true; m.receiveShadow = true; return m; }
+function canvasTex(w,h,draw){ const c = document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h); const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t; }
+
+// ---------- Shell ----------
+const shellMat = std(0xF4F4F7,{roughness:.7});
+const shell = new THREE.Group(); scene.add(shell);
+const W = 0.42, D = 0.32;
+const plinth = box(0.48,0.08,0.40,std(0xE4E4EA)); plinth.position.set(0,0.04,-0.01); shell.add(plinth);
+const body = box(W,1.02,D,shellMat); body.position.set(0,0.59,0); shell.add(body);
+// sloped head
+const prof = new THREE.Shape();
+const P = [[-0.16,1.10],[0.17,1.10],[0.0,1.48],[-0.16,1.48]];
+prof.moveTo(-P[0][0],P[0][1]); for(let i=1;i<P.length;i++) prof.lineTo(-P[i][0],P[i][1]); prof.closePath();
+const hg = new THREE.ExtrudeGeometry(prof,{depth:W,bevelEnabled:false});
+hg.rotateY(Math.PI/2); hg.translate(-W/2,0,0);
+const head = new THREE.Mesh(hg,shellMat); head.castShadow = true; shell.add(head);
+const TILT = Math.atan2(0.17,0.38); // screen normal elevation (~24°)
+const slope = t => new THREE.Vector3(0, 1.10+0.38*t, 0.17-0.17*t);
+const nrm = new THREE.Vector3(0,Math.sin(TILT),Math.cos(TILT));
+
+// welcome band
+const bandTex = canvasTex(1024,410,(g,w,h)=>{ g.fillStyle='#5B2BB5'; g.fillRect(0,0,w,h); g.fillStyle='#fff'; g.textAlign='center';
+  g.font='600 150px "Segoe UI", Tahoma, Arial, sans-serif'; g.fillText('مرحبا بكم',w/2,170); g.font='700 140px "Barlow Condensed", Arial, sans-serif'; g.fillText('BIENVENUE',w/2,340); });
+const band = new THREE.Mesh(new THREE.PlaneGeometry(W,0.16), new THREE.MeshBasicMaterial({map:bandTex})); band.position.set(0,0.99,D/2+0.001); shell.add(band);
+// ticket slot plate
+const slotTex = canvasTex(512,256,(g,w,h)=>{ g.fillStyle='#EDEBF5'; g.fillRect(0,0,w,h); g.fillStyle='#2A2440'; g.fillRect(40,40,432,30);
+  g.fillStyle='#5B2BB5'; g.textAlign='center'; g.font='600 38px Barlow, Arial, sans-serif'; g.fillText('Feuille de soins A4',w/2,140); });
+const slot = new THREE.Mesh(new THREE.PlaneGeometry(0.28,0.14), new THREE.MeshBasicMaterial({map:slotTex})); slot.position.set(0,0.735,D/2+0.001); shell.add(slot);
+// side vents
+[[-1,0.95],[1,0.95],[-1,0.30],[1,0.30]].forEach(([s,y])=>{ for(let i=0;i<5;i++){ const v = box(0.002,0.008,0.16,std(0x2A2830)); v.castShadow=false; v.position.set(s*(W/2+0.001),y+i*0.018-0.036,-0.02); shell.add(v);} });
+const shellMeshes = []; shell.traverse(o=>{ if(o.isMesh) shellMeshes.push(o); });
+
+// ---------- Components ----------
+const comps = {};
+function comp(id){ const g = new THREE.Group(); g.userData.id = id; scene.add(g); comps[id] = {g, base:new THREE.Vector3(), off:new THREE.Vector3(), mats:[]}; return g; }
+function register(id){ const c = comps[id]; c.base.copy(c.g.position); c.g.traverse(o=>{ if(o.isMesh){ o.userData.id = id; if(o.material.emissive) c.mats.push(o.material);} }); }
+
+// 1 screen
+{ const g = comp('screen');
+  const p = slope(0.47); g.position.copy(p); g.rotation.x = -TILT;
+  const back = box(0.3375,0.2655,0.0445,std(0x1C1B22,{roughness:.4})); back.position.z = -0.0445/2+0.004; g.add(back);
+  const uiTex = canvasTex(1024,768,(x,w,h)=>{ x.fillStyle='#F7F7FA'; x.fillRect(0,0,w,h);
+    x.fillStyle='#5B2BB5'; x.font='800 54px Barlow, Arial, sans-serif'; x.fillText('CNASS',48,86);
+    x.fillStyle='#1B1830'; x.textAlign='center'; x.font='700 50px Barlow, Arial, sans-serif'; x.fillText('Entrez votre numéro CNASS',w/2,210);
+    x.strokeStyle='#C9C6D8'; x.lineWidth=4; x.strokeRect(312,245,400,70);
+    const keys=['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
+    keys.forEach((k,i)=>{ const cx=372+(i%3)*140, cy=350+Math.floor(i/3)*98; x.fillStyle = k==='✓'?'#3FA35C':'#ECEBF3'; x.fillRect(cx-58,cy,116,84); x.fillStyle = k==='✓'?'#fff':'#1B1830'; x.font='700 44px Barlow, Arial, sans-serif'; x.fillText(k,cx,cy+58); });
+  });
+  const disp = new THREE.Mesh(new THREE.PlaneGeometry(0.304,0.228), new THREE.MeshBasicMaterial({map:uiTex})); disp.position.z = 0.0065; g.add(disp);
+  register('screen'); comps.screen.off.set(0,0.08,0.42);
+}
+// 2 camera
+{ const g = comp('cam');
+  g.position.copy(slope(0.93)).addScaledVector(nrm,0.012); g.rotation.x = -TILT*0.55;
+  const hsg = box(0.085,0.03,0.035,std(0x1E1D24,{roughness:.35})); g.add(hsg);
+  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.009,0.009,0.006,24), std(0x0B0B10,{metalness:.6,roughness:.2})); lens.rotation.x = Math.PI/2; lens.position.z = 0.019; g.add(lens);
+  const led = new THREE.Mesh(new THREE.SphereGeometry(0.002,8,8), new THREE.MeshBasicMaterial({color:0x3FD06A})); led.position.set(0.028,0,0.018); g.add(led);
+  register('cam'); comps.cam.off.set(0,0.2,0.5);
+}
+// 3 jetson
+{ const g = comp('jetson'); g.position.set(0,0.935,-0.02);
+  const shelf = box(0.34,0.008,0.27,std(0xB9BAC4)); shelf.position.y = -0.006; g.add(shelf);
+  const pcb = box(0.103,0.004,0.09,std(0x1D2A1A,{roughness:.6})); pcb.position.y = 0.012; g.add(pcb);
+  const sink = box(0.07,0.028,0.065,std(0x2B2B30,{metalness:.5,roughness:.35})); sink.position.y = 0.028; g.add(sink);
+  const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.026,0.026,0.004,32), std(0x76B900,{roughness:.5})); fan.position.y = 0.044; g.add(fan);
+  [[-0.045,1],[0.045,-1]].forEach(([x,s])=>{ const a = new THREE.Mesh(new THREE.CylinderGeometry(0.005,0.005,0.11,12), std(0x151518)); a.position.set(x,0.07,-0.04); a.rotation.z = s*0.25; a.castShadow = true; g.add(a); });
+  const psu = box(0.11,0.03,0.05,std(0x26262C)); psu.position.set(-0.11,0.02,0.06); g.add(psu);
+  register('jetson'); comps.jetson.off.set(0.42,0.12,0.25);
+}
+// 4 printer (Canon MF3010)
+{ const g = comp('printer'); g.position.set(0,0.55+0.127,0.012);
+  const shelf2 = box(0.40,0.008,0.28,std(0xB9BAC4)); shelf2.position.y = -0.131; g.add(shelf2);
+  const bodyP = box(0.372,0.20,0.276,std(0x1F1F24,{roughness:.5})); bodyP.position.y = -0.027; g.add(bodyP);
+  const lid = box(0.372,0.05,0.276,std(0x2B2B31,{roughness:.35})); lid.position.y = 0.1; g.add(lid);
+  const glass = box(0.30,0.002,0.2,std(0x2F80C9,{roughness:.2,metalness:.3})); glass.position.set(0,0.126,-0.01); g.add(glass);
+  const panel = box(0.05,0.03,0.01,std(0x3A3A44)); panel.position.set(0.15,0.09,0.14); g.add(panel);
+  const sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.21,0.16), new THREE.MeshStandardMaterial({color:0xffffff,side:THREE.DoubleSide,roughness:.9}));
+  sheet.position.set(0,0.085,0.19); sheet.rotation.x = -1.25; g.add(sheet);
+  register('printer'); comps.printer.off.set(-0.5,0.02,0.45);
+}
+// 5 UPS
+{ const g = comp('ups'); g.position.set(0,0.08+0.069+0.004,0.0);
+  const u = box(0.31,0.138,0.098,std(0x232327,{roughness:.45})); g.add(u);
+  const led = new THREE.Mesh(new THREE.CircleGeometry(0.006,16), new THREE.MeshBasicMaterial({color:0x33CC66})); led.position.set(0.12,0.03,0.0495); g.add(led);
+  const btn = new THREE.Mesh(new THREE.CircleGeometry(0.01,20), std(0x44444C)); btn.position.set(0.12,0.0,0.0495); g.add(btn);
+  register('ups'); comps.ups.off.set(0,0,0.55);
+}
+// 6 fans
+{ const g = comp('fans'); g.position.set(0,0,-D/2+0.02);
+  [0.30,0.95].forEach(y=>{ const f = new THREE.Group(); f.position.set(0.1,y,0);
+    const fr = box(0.08,0.08,0.025,std(0x55586A)); f.add(fr);
+    const bl = new THREE.Mesh(new THREE.CylinderGeometry(0.034,0.034,0.027,24), std(0x8C8FA3)); bl.rotation.x = Math.PI/2; f.add(bl);
+    g.add(f); });
+  register('fans'); comps.fans.off.set(0,0,-0.45);
+}
+// 7 strip
+{ const g = comp('strip'); g.position.set(-0.03,0.26,-D/2+0.045);
+  const s = box(0.26,0.04,0.05,std(0xF0F0F2)); g.add(s);
+  for(let i=0;i<4;i++){ const o = new THREE.Mesh(new THREE.CircleGeometry(0.012,20), std(0x3A3A42)); o.position.set(-0.09+i*0.06,0.0201,0); o.rotation.x = -Math.PI/2; g.add(o); }
+  const sw = box(0.02,0.012,0.02,std(0xC24E6B)); sw.position.set(0.115,0.026,0); g.add(sw);
+  register('strip'); comps.strip.off.set(-0.3,0,-0.45);
+}
+
+// cables (hidden when exploded)
+const cables = new THREE.Group(); scene.add(cables);
+const cableMat = std(0x121216,{roughness:.8});
+function cable(pts){ const c = new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p))); cables.add(new THREE.Mesh(new THREE.TubeGeometry(c,40,0.004,6,false),cableMat)); }
+cable([[0.14,0.2,-0.04],[0.16,0.24,-0.1],[0.08,0.26,-0.12]]);
+cable([[-0.06,0.28,-0.12],[-0.15,0.5,-0.12],[-0.15,0.9,-0.1],[-0.1,0.95,0.01]]);
+cable([[0.0,0.29,-0.12],[-0.12,0.45,-0.12],[-0.06,0.62,-0.06]]);
+cable([[0.04,0.96,-0.02],[0.1,1.05,0.0],[0.06,1.18,0.07]]);
+cable([[0.02,0.96,-0.04],[0.12,1.2,-0.04],[0.02,1.43,0.02]]);
+cable([[-0.02,0.95,0.02],[-0.1,0.82,0.02],[-0.04,0.71,-0.02]]);
+
+// ---------- Views ----------
+let view = 'xray', selected = null;
+function applyView(v){
+  view = v;
+  document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===v));
+  const see = v!=='closed';
+  shellMeshes.forEach(m=>{ m.material.transparent = see; m.material.opacity = see?0.14:1; m.material.depthWrite = !see; m.castShadow = !see; m.material.needsUpdate = true; });
+  band.material.opacity = see?0.25:1; band.material.transparent = see; slot.material.opacity = see?0.25:1; slot.material.transparent = see;
+  cables.visible = v==='xray';
+}
+document.querySelectorAll('.views button').forEach(b=>b.addEventListener('click',()=>{ const was = view; applyView(b.dataset.v); if(b.dataset.v==='explode' && was!=='explode') flyTo(EXP_POS,HOME_TGT); if(was==='explode' && b.dataset.v!=='explode') flyTo(HOME_POS,HOME_TGT); }));
+document.getElementById('reset').addEventListener('click',()=>{ flyTo(view==='explode'?EXP_POS:HOME_POS,HOME_TGT); });
+
+let fly = null;
+function flyTo(pos,tgt){ fly = {p0:cam.position.clone(),t0:controls.target.clone(),p1:pos.clone(),t1:tgt.clone(),k:0}; }
+
+// ---------- Panel ----------
+const list = document.getElementById('parts');
+PARTS.forEach(p=>{
+  const li = document.createElement('li'); li.id = 'p-'+p.id;
+  const spec = p.spec.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');
+  li.innerHTML = `<button class="row" aria-expanded="false"><span class="dot" style="background:${p.color}">${p.n}</span><span><b>${p.name}</b><small>${p.sub}</small></span><span class="h">${p.h}</span></button>
+  <div class="detail"><p>${p.text}</p><dl class="spec">${spec}</dl>${p.note?`<p class="note">${p.note}</p>`:''}${p.link?`<a href="${p.link}" target="_blank" rel="noopener">Voir la fiche produit</a>`:''}</div>`;
+  li.querySelector('.row').addEventListener('click',()=>select(selected===p.id?null:p.id,true));
+  list.appendChild(li);
+});
+const tagsEl = document.getElementById('tags'); const tagEls = {};
+PARTS.forEach(p=>{ const t = document.createElement('button'); t.className='tag'; t.style.background=p.color; t.textContent=p.n; t.setAttribute('aria-label',p.name);
+  t.addEventListener('click',()=>select(p.id,true)); tagsEl.appendChild(t); tagEls[p.id]=t; });
+
+const HL = new THREE.Color(0x5B2BB5);
+function select(id,fromUI){
+  selected = id;
+  PARTS.forEach(p=>{ const li = document.getElementById('p-'+p.id); const on = p.id===id; li.classList.toggle('open',on); li.querySelector('.row').setAttribute('aria-expanded',on); tagEls[p.id].classList.toggle('on',on); });
+  Object.entries(comps).forEach(([k,c])=>c.mats.forEach(m=>{ m.emissive.copy(k===id?HL:new THREE.Color(0)); m.emissiveIntensity = k===id?0.45:0; }));
+  if(id && view==='closed' && id!=='screen') applyView('xray');
+  if(id && fromUI && window.matchMedia('(max-width:860px)').matches===false){ document.getElementById('p-'+id).scrollIntoView({block:'nearest',behavior:'smooth'}); }
+}
+
+// picking
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(); let down = null;
+canvas.addEventListener('pointerdown',e=>{ down = [e.clientX,e.clientY]; });
+canvas.addEventListener('pointerup',e=>{
+  if(!down || Math.hypot(e.clientX-down[0],e.clientY-down[1])>5) return;
+  const r = canvas.getBoundingClientRect(); mouse.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(mouse,cam);
+  const targets = []; Object.values(comps).forEach(c=>c.g.traverse(o=>{ if(o.isMesh) targets.push(o); }));
+  const hit = ray.intersectObjects(targets,false)[0];
+  select(hit?hit.object.userData.id:null,true);
+});
+
+// ---------- Loop ----------
+function resize(){ const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w,h,false); cam.aspect = w/h;
+  if(w>860) cam.setViewOffset(w,h,-w*0.08,-h*0.03,w,h); else cam.clearViewOffset();
+  cam.updateProjectionMatrix(); }
+window.addEventListener('resize',resize); resize();
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const v3 = new THREE.Vector3();
+function tick(){
+  requestAnimationFrame(tick);
+  const k = reduce?1:0.12;
+  Object.values(comps).forEach(c=>{ v3.copy(c.base); if(view==='explode') v3.add(c.off); c.g.position.lerp(v3,k); });
+  if(fly){ fly.k = Math.min(1,fly.k+(reduce?1:0.05)); const e = 1-Math.pow(1-fly.k,3); cam.position.lerpVectors(fly.p0,fly.p1,e); controls.target.lerpVectors(fly.t0,fly.t1,e); if(fly.k>=1) fly=null; }
+  controls.update();
+  renderer.render(scene,cam);
+  const w = stage.clientWidth, h = stage.clientHeight;
+  PARTS.forEach(p=>{ const c = comps[p.id]; const b = new THREE.Box3().setFromObject(p.id==='fans'?c.g.children[1]:c.g); b.getCenter(v3); v3.project(cam);
+    const t = tagEls[p.id]; const vis = v3.z<1; t.style.display = vis?'grid':'none';
+    t.style.transform = `translate(${(v3.x*0.5+0.5)*w}px,${(-v3.y*0.5+0.5)*h}px) translate(-50%,-50%)`; });
+}
+applyView('xray');
+tick();
+})();
+</script>
+</body>
+</html>
