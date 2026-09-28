@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CNASS Prototype : vérification faciale au point de soins</title>
+<meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Suivi du projet CNASS × STARTAI : étapes, borne autonome en 3D, matériel et documents.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,9 +31,8 @@ nav .wrap{display:flex;align-items:center;gap:24px;height:60px}
 .brand span{color:var(--purple)}
 nav a.l{color:var(--muted);text-decoration:none;font-weight:500}
 nav a.l:hover{color:var(--ink)}
-.src{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
-.src i{width:8px;height:8px;border-radius:50%;background:var(--todo);display:inline-block}
-.src.live i{background:var(--ok)}
+.out{font-size:14px;font-weight:600;color:var(--purple);text-decoration:none;border:1px solid var(--rule);border-radius:99px;padding:6px 14px}
+.out:hover{background:var(--purple-soft)}
 header.hero{background:var(--purple-deep);color:#fff;overflow:hidden;position:relative}
 .hero .wrap{padding-top:72px;padding-bottom:64px;display:grid;grid-template-columns:1.3fr 1fr;gap:48px;align-items:end}
 .hero h1{font:700 clamp(40px,6vw,72px)/.95 "Barlow Condensed",Arial,sans-serif;margin:0}
@@ -99,7 +99,7 @@ footer{padding:64px 0 40px;color:var(--muted);font-size:14px}
   <a class="l" href="#borne">Borne 3D</a>
   <a class="l" href="#materiel">Matériel</a>
   <a class="l" href="#documents">Documents</a>
-  <span class="src" id="src"><i></i><span>Données locales</span></span>
+  <a class="out" href="/api/logout">Se déconnecter</a>
 </div></nav>
 
 <header class="hero"><div class="wrap">
@@ -119,7 +119,7 @@ footer{padding:64px 0 40px;color:var(--muted);font-size:14px}
 <main class="wrap">
   <section id="etapes">
     <h2>Les étapes du projet</h2>
-    <p class="sub">Deux chantiers en parallèle : le logiciel de vérification et la borne physique. L'avancement est lu en direct dans la base Supabase.</p>
+    <p class="sub">Deux chantiers en parallèle : le logiciel de vérification et la borne physique. L'avancement est mis à jour en temps réel.</p>
     <div class="lanes">
       <div class="lane"><h3>Logiciel</h3><ol class="steps" id="lane-logiciel"></ol></div>
       <div class="lane"><h3>Borne autonome</h3><ol class="steps" id="lane-borne"></ol></div>
@@ -162,7 +162,7 @@ footer{padding:64px 0 40px;color:var(--muted);font-size:14px}
     </div>
   </section>
 </main>
-<footer><div class="wrap">CNASS Prototype, STARTAI. Données d'avancement hébergées sur Supabase.</div></footer>
+<footer><div class="wrap">CNASS Prototype, STARTAI. Document de travail confidentiel.</div></footer>
 
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -221,13 +221,11 @@ async function load(){
     ]);
     if(e.error || c.error) throw (e.error || c.error);
     render({etapes: e.data, composants: c.data});
-    const src = document.getElementById('src'); src.classList.add('live'); src.querySelector('span').textContent = 'Supabase connecté';
     db.channel('etapes-live').on('postgres_changes',{event:'*',schema:'public',table:'etapes'},async()=>{
       const r = await db.from('etapes').select('*').order('ordre'); if(!r.error) render({etapes:r.data, composants:c.data});
     }).subscribe();
   }catch(err){
-    console.warn('Supabase indisponible, données locales affichées :', err);
-    document.querySelector('#src span').textContent = 'Données locales (Supabase injoignable)';
+    console.warn('Mise à jour en direct indisponible :', err);
   }
 }
 load();
