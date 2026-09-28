@@ -3,375 +3,471 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Borne CNASS : implantation du matériel en 3D</title>
+<title>Borne CNASS : maquette 3D et cotes des équipements</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#E9EBEF; --panel:#FFFFFF; --ink:#1B1830; --muted:#5E5A72; --rule:#D9DBE3;
-  --purple:#5B2BB5; --purple-soft:#EEE8FA; --orange:#E8903A; --focus:#E8903A;
+  --bg:#E7E9EE; --panel:#FFFFFF; --ink:#1B1830; --muted:#5E5A72; --rule:#DADCE4; --soft:#F4F3F8;
+  --purple:#5B2BB5; --purple-soft:#EEE8FA; --orange:#E8903A; --ok:#2E8B57; --bad:#C23B3B;
   box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){ --bg:#17151F; --panel:#211E2C; --ink:#F1EFF7; --muted:#A7A2BA; --rule:#34303F; --purple:#9D7BF0; --purple-soft:#2D2542; }
-}
-:root[data-theme="dark"]{ --bg:#17151F; --panel:#211E2C; --ink:#F1EFF7; --muted:#A7A2BA; --rule:#34303F; --purple:#9D7BF0; --purple-soft:#2D2542; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#17151F; --panel:#211E2C; --ink:#F1EFF7; --muted:#A7A2BA; --rule:#34303F; --soft:#2A2636; --purple:#9D7BF0; --purple-soft:#2D2542; } }
+:root[data-theme="dark"]{ --bg:#17151F; --panel:#211E2C; --ink:#F1EFF7; --muted:#A7A2BA; --rule:#34303F; --soft:#2A2636; --purple:#9D7BF0; --purple-soft:#2D2542; }
 *,*::before,*::after{box-sizing:border-box}
-html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+html{height:100%}
 body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:400 15px/1.5 Barlow,"Segoe UI",Arial,sans-serif}
-.app{display:grid;grid-template-columns:1fr 400px;height:100%}
+.app{display:grid;grid-template-columns:1fr 420px;height:100%}
 .stage{position:relative;overflow:hidden;min-height:0}
 #c{display:block;width:100%;height:100%;touch-action:none}
-.title{position:absolute;left:24px;top:20px;pointer-events:none;max-width:60%}
-.title h1{margin:0;font:700 34px/1.02 "Barlow Condensed",Arial Narrow,Arial,sans-serif;letter-spacing:.01em}
+#labels{position:absolute;inset:0;pointer-events:none}
+.title{position:absolute;left:24px;top:18px;pointer-events:none}
+.title h1{margin:0;font:700 30px/1 "Barlow Condensed",Arial,sans-serif}
 .title p{margin:6px 0 0;color:var(--muted);font-size:14px}
-.views{position:absolute;left:24px;bottom:22px;display:flex;gap:0;background:var(--panel);border:1px solid var(--rule);border-radius:999px;padding:4px}
-.views button{border:0;background:transparent;color:var(--ink);font:600 14px Barlow,Arial,sans-serif;padding:8px 14px;border-radius:999px;cursor:pointer}
-.views button[aria-pressed="true"]{background:var(--purple);color:#fff}
-.reset{position:absolute;right:20px;bottom:22px;border:1px solid var(--rule);background:var(--panel);color:var(--ink);font:500 13px Barlow,Arial,sans-serif;padding:8px 12px;border-radius:999px;cursor:pointer}
-button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.tag{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;border:2px solid #fff;color:#fff;font:700 13px "Barlow Condensed",Arial,sans-serif;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 8px rgba(20,10,40,.35);padding:0}
-.tag.on{width:32px;height:32px;font-size:15px}
-aside{background:var(--panel);border-left:1px solid var(--rule);overflow-y:auto;padding:24px 24px 32px}
-aside h2{font:700 22px/1.1 "Barlow Condensed",Arial,sans-serif;margin:0 0 4px}
-.lead{color:var(--muted);margin:0 0 18px;font-size:14px}
+.bar{position:absolute;left:24px;right:24px;bottom:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;background:var(--panel);border:1px solid var(--rule);border-radius:999px;padding:4px}
+.seg button,.tog{border:0;background:transparent;color:var(--ink);font:600 14px Barlow,Arial,sans-serif;padding:8px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--purple);color:#fff}
+.tog{background:var(--panel);border:1px solid var(--rule)}
+.tog[aria-pressed="true"]{border-color:var(--purple);color:var(--purple)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.lbl{pointer-events:auto;cursor:pointer;background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:10px;padding:5px 9px 5px 8px;font:600 12.5px/1.2 Barlow,Arial,sans-serif;white-space:nowrap;box-shadow:0 3px 10px rgba(20,10,40,.14);display:flex;gap:7px;align-items:flex-start}
+.lbl i{width:9px;height:9px;border-radius:50%;margin-top:3px;flex:none}
+.lbl small{display:block;font-weight:500;color:var(--muted);font-size:11.5px}
+.lbl.on{border-color:var(--purple);box-shadow:0 0 0 2px var(--purple)}
+.dim{font:700 12px Barlow,Arial,sans-serif;color:#fff;background:#E8903A;border-radius:6px;padding:2px 6px;white-space:nowrap}
+aside{background:var(--panel);border-left:1px solid var(--rule);overflow-y:auto;padding:22px 22px 32px}
+aside h2{font:700 21px/1.1 "Barlow Condensed",Arial,sans-serif;margin:0 0 4px}
+aside h3{font:700 17px "Barlow Condensed",Arial,sans-serif;margin:26px 0 8px}
+.lead{color:var(--muted);margin:0 0 14px;font-size:14px}
 .parts{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
 .parts li{border-bottom:1px solid var(--rule)}
-.row{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;width:100%;background:none;border:0;color:inherit;text-align:left;padding:12px 2px;cursor:pointer;font:inherit}
-.dot{width:22px;height:22px;border-radius:50%;color:#fff;font:700 12px "Barlow Condensed",Arial,sans-serif;display:grid;place-items:center}
-.row b{font-weight:600;display:block;line-height:1.25}
-.row small{color:var(--muted);font-size:13px}
-.h{font:600 13px "Barlow Condensed",Arial,sans-serif;color:var(--purple);white-space:nowrap}
-.detail{display:none;padding:0 2px 16px 34px;font-size:14px}
+.row{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center;width:100%;background:none;border:0;color:inherit;text-align:left;padding:11px 2px;cursor:pointer;font:inherit}
+.row .sw{width:12px;height:12px;border-radius:3px}
+.row b{display:block;font-weight:600;line-height:1.25}
+.row small{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.st{font:600 12px Barlow,Arial,sans-serif;border-radius:99px;padding:2px 8px;white-space:nowrap}
+.st.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.st.bad{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.detail{display:none;padding:0 2px 14px 22px;font-size:14px}
 li.open .detail{display:block}
 li.open .row b{color:var(--purple)}
-.detail p{margin:0 0 10px;max-width:62ch}
-.spec{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 10px}
+.spec{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0 0 8px}
 .spec dt{color:var(--muted)}
-.spec dd{margin:0}
-.detail a{color:var(--purple);font-weight:600}
-.note{background:var(--purple-soft);border-radius:10px;padding:10px 12px;margin:0 0 10px}
-.power{margin-top:26px}
-.power h3,.budget h3{font:700 18px "Barlow Condensed",Arial,sans-serif;margin:0 0 8px}
-.tbl{width:100%;border-collapse:collapse;font-size:14px}
-.tbl td{padding:6px 0;border-bottom:1px solid var(--rule)}
-.tbl td:last-child{text-align:right;white-space:nowrap}
-.tbl tr.sum td{font-weight:600;border-bottom:0}
-.budget{margin-top:26px}
-.fine{color:var(--muted);font-size:12.5px;margin-top:10px}
-@media (max-width:860px){
-  .app{grid-template-columns:1fr;grid-template-rows:60vh auto;height:auto}
-  .stage{height:60vh}
+.spec dd{margin:0;font-variant-numeric:tabular-nums}
+.links{display:flex;gap:14px;flex-wrap:wrap}
+.links a{color:var(--purple);font-weight:600}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.form label{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.form input{font:600 15px Barlow,Arial,sans-serif;color:var(--ink);background:var(--soft);border:1px solid var(--rule);border-radius:8px;padding:7px 9px;width:100%;font-variant-numeric:tabular-nums}
+.checks{list-style:none;margin:0;padding:0}
+.checks li{display:grid;grid-template-columns:20px 1fr;gap:6px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:14px}
+.checks .ic{font-weight:700}
+.checks .ok .ic{color:var(--ok)} .checks .bad .ic{color:var(--bad)}
+.checks small{color:var(--muted);display:block}
+.note{background:var(--purple-soft);border-radius:10px;padding:10px 12px;font-size:13.5px;margin:10px 0 0}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;grid-template-rows:64vh auto;height:auto}
+  .stage{height:64vh}
   aside{border-left:0;border-top:1px solid var(--rule);overflow:visible}
-  .title h1{font-size:26px}
   .title p{display:none}
-  .views{left:12px;bottom:12px}
-  .views button{padding:7px 10px;font-size:13px}
-  .reset{right:12px;bottom:12px}
+  .bar{left:10px;right:10px;bottom:10px;gap:6px}
+  .seg button,.tog{padding:7px 10px;font-size:13px}
+  .lbl{font-size:11px;padding:4px 7px} .lbl small{display:none}
 }
-@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
 </head>
 <body>
 <div class="app">
   <div class="stage" id="stage">
-    <canvas id="c" aria-label="Maquette 3D de la borne CNASS avec ses composants"></canvas>
-    <div class="title">
-      <h1>Borne CNASS autonome</h1>
-      <p>Implantation du matériel à l'échelle réelle. Faites tourner la borne, touchez un composant.</p>
+    <canvas id="c" aria-label="Maquette 3D de la borne CNASS"></canvas>
+    <div id="labels"></div>
+    <div class="title"><h1>Borne CNASS autonome</h1><p>Équipements à leurs dimensions constructeur. Faites tourner, touchez un nom.</p></div>
+    <div class="bar">
+      <div class="seg" role="group" aria-label="Vue">
+        <button data-v="closed" aria-pressed="false">Fermée</button>
+        <button data-v="xray" aria-pressed="true">Transparente</button>
+        <button data-v="explode" aria-pressed="false">Éclatée</button>
+      </div>
+      <button class="tog" id="tLabels" aria-pressed="true">Noms</button>
+      <button class="tog" id="tDims" aria-pressed="false">Cotes</button>
+      <button class="tog" id="tReset" aria-pressed="false">Recentrer</button>
     </div>
-    <div id="tags"></div>
-    <div class="views" role="group" aria-label="Mode d'affichage">
-      <button data-v="closed" aria-pressed="false">Fermée</button>
-      <button data-v="xray" aria-pressed="true">Transparente</button>
-      <button data-v="explode" aria-pressed="false">Éclatée</button>
-    </div>
-    <button class="reset" id="reset">Recentrer</button>
   </div>
   <aside>
-    <h2>Composants et emplacements</h2>
-    <p class="lead">Chaque élément a sa zone : l'interface en haut, le calcul au milieu, l'impression A4 à mi-hauteur, l'énergie au sol pour la stabilité.</p>
+    <h2>Équipements</h2>
+    <p class="lead">Dimensions tirées des fiches constructeur. Touchez un équipement pour voir sa fiche et le lien en ligne.</p>
     <ul class="parts" id="parts"></ul>
 
-    <section class="power">
-      <h3>Bilan électrique</h3>
-      <table class="tbl">
-        <tr><td>Écran tactile 15"</td><td>10 W</td></tr>
-        <tr><td>Jetson Orin NX (usage courant)</td><td>15 à 25 W</td></tr>
-        <tr><td>Caméra USB et ventilateurs</td><td>4 W</td></tr>
-        <tr class="sum"><td>Sur onduleur</td><td>≈ 30 à 40 W</td></tr>
-        <tr><td>Canon MF3010 en impression</td><td>≈ 450 W, pointe ≈ 960 W</td></tr>
-        <tr class="sum"><td>Imprimante, prise directe</td><td>≈ 1,4 W en veille</td></tr>
-      </table>
-      <p class="fine">En cas de coupure, la vérification faciale continue sur onduleur et l'application doit afficher « Impression momentanément indisponible ». Brancher la laser sur l'onduleur imposerait un modèle d'au moins 1 200 VA, trop long pour le fût et plus cher.</p>
-    </section>
+    <h3>Cotes de la borne (mm)</h3>
+    <p class="lead" style="margin-bottom:10px">Valeurs provisoires. Remplacez-les par vos mesures : la maquette et les vérifications se recalculent.</p>
+    <div class="form" id="form"></div>
 
-    <section class="budget">
-      <h3>Budget matériel indicatif</h3>
-      <table class="tbl">
-        <tr><td>Écran iiyama TF1534MC-B7X</td><td>selon lien, ≈ 500 € en Europe</td></tr>
-        <tr><td>Jetson Orin NX (Yahboom)</td><td>à partir de 909 $</td></tr>
-        <tr><td>Caméra USB 1080p WDR</td><td>40 à 70 $</td></tr>
-        <tr><td>Canon i-SENSYS MF3010 + cartouche 725</td><td>prix local à vérifier</td></tr>
-        <tr><td>Parafoudre pour l'imprimante</td><td>10 à 20 $</td></tr>
-        <tr><td>Onduleur APC BX500MI</td><td>60 à 90 €</td></tr>
-        <tr><td>Ventilation, multiprise, câbles</td><td>25 à 40 $</td></tr>
-      </table>
-    </section>
+    <h3>Vérification d'encombrement</h3>
+    <ul class="checks" id="checks"></ul>
+    <p class="note" id="noteFit"></p>
   </aside>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script>
-(function(){
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// ---------- Données équipements (dimensions constructeur, en mm) ----------
 const PARTS = [
-  { id:"screen", n:1, color:"#5B2BB5", name:"Écran tactile iiyama 15\"", sub:"TF1534MC-B7X, format 4:3", h:"1,28 m",
-    text:"Monté dans la tête inclinée à 24°, face à l'utilisateur debout. Le format 4:3 tient dans la largeur de la tête avec plusieurs centimètres de marge.",
-    spec:[["Dimensions","337,5 × 265,5 × 44,5 mm"],["Zone active","304 × 228 mm"],["Fixation","VESA 100, cadre ouvert"],["Protection","IP65 en façade"],["Alimentation","12 V, 10 W"],["Liaison","HDMI + USB tactile vers le Jetson"]],
-    note:"La découpe actuelle de la façade est trop petite : prévoir environ 310 × 235 mm. Le second lien (TF1634MC, 15,6\" 16:9) mesure environ 38 cm de large, ce qui est trop juste pour cette tête.",
-    link:"https://www.amazon.ae/iiyama-ProLite-TF1534MC-B7X-touchscreen-DisplayPort/dp/B08Y5XBGFT?th=1" },
-  { id:"cam", n:2, color:"#E8903A", name:"Caméra USB 1080p WDR", sub:"Au-dessus de l'écran, centrée", h:"1,45 m",
-    text:"Placée au sommet de la tête pour être le plus près possible de la hauteur du visage. Une caméra à large dynamique (WDR) compense le contre-jour des salles d'attente.",
-    spec:[["Type","Module USB 1080p, WDR, 70 à 90° de champ"],["Position","Centrée au-dessus de l'écran, légèrement orientée vers le haut"],["Alimentation","USB, ≈ 2 W"]],
-    note:"Ajouter un éclairage LED doux au-dessus de l'écran améliore nettement les scores en salle sombre." },
-  { id:"jetson", n:3, color:"#76B900", name:"Jetson Orin NX (Yahboom)", sub:"Unité de calcul et de décision", h:"0,98 m",
-    text:"Sur une étagère dans le haut du fût, juste derrière le bandeau « Bienvenue », près de l'écran et de la caméra pour des câbles courts. Les ouïes latérales hautes évacuent sa chaleur.",
-    spec:[["Carte","≈ 100 × 80 mm + ventilateur"],["Alimentation","19 V obligatoire, jusqu'à ≈ 40 W"],["Réseau","Ethernet ou Wi-Fi intégré (antennes à sortir du caisson métallique)"],["Stockage","SSD M.2 selon le kit choisi"]],
-    link:"https://category.yahboom.net/fr/products/jetson-orin-nx" },
-  { id:"printer", n:4, color:"#2F80C9", name:"Canon i-SENSYS MF3010", sub:"Laser A4 monochrome, USB", h:"0,55 à 0,80 m",
-    text:"Posée sur une étagère à mi-hauteur. La feuille A4 sort par le bac supérieur, face à une fente de 24 cm découpée dans la façade à 0,77 m : la feuille de soins sort au format officiel, à hauteur de main.",
-    spec:[["Dimensions","372 × 276 × 254 mm, 8,2 kg"],["Consommation","≈ 1,4 W en veille, ≈ 450 W en impression, pointe ≈ 960 W"],["Température","10 à 30 °C de fonctionnement"],["Pilote Linux","Canon UFR II LT, paquet arm64 compatible Jetson (CUPS)"],["Consommable","Cartouche 725, ≈ 1 600 pages"]],
-    note:"Largeur 372 mm : elle ne rentre que si l'intérieur du fût fait au moins 38 cm. La maquette élargit le fût à 42 cm ; mesurez votre borne avant de découper. Ne pas la brancher sur l'onduleur : une prise directe avec parafoudre suffit. Prévoir une porte de service en façade pour recharger le papier." },
-  { id:"ups", n:5, color:"#3A3A42", name:"Onduleur APC Back-UPS BX500MI", sub:"500 VA / 300 W, line-interactive", h:"0,15 m",
-    text:"Posé au sol, en travers du fût : l'élément le plus lourd en bas abaisse le centre de gravité. Il ne secourt que le Jetson, l'écran et la caméra : l'imprimante laser (pointe ≈ 960 W) le mettrait en surcharge. Il filtre les variations du réseau et relie le Jetson en USB pour un arrêt propre en cas de coupure longue.",
-    spec:[["Dimensions","98 × 138 × 310 mm, 4,2 kg"],["Puissance","300 W (charge secourue ≈ 30 à 40 W, sans l'imprimante)"],["Autonomie estimée","≈ 20 à 30 min à 45 W"],["Pourquoi pas le BX750MI","355 mm de long : ne tient pas dans les 36 cm intérieurs du fût"]],
-    note:"Autonomie à confirmer avec le simulateur APC. Pour des coupures longues, un modèle à batterie plus grosse se placerait dans le socle agrandi." },
-  { id:"fans", n:6, color:"#8C8FA3", name:"Ventilation 2 × 80 mm", sub:"Entrée basse, sortie haute", h:"0,30 m / 0,95 m",
-    text:"L'air frais entre en bas à l'arrière, traverse le fût et ressort en haut, là où le Jetson chauffe. Des filtres anti-poussière sont conseillés, surtout en zone côtière ou sableuse.",
-    spec:[["Ventilateurs","2 × 80 mm, 12 V, silencieux"],["Filtres","Grilles avec mousse lavable"]] },
-  { id:"strip", n:7, color:"#C24E6B", name:"Multiprise interne", sub:"Sur la sortie de l'onduleur", h:"0,26 m",
-    text:"Fixée à la paroi arrière. Elle distribue la sortie protégée de l'onduleur vers les blocs d'alimentation : 19 V Jetson et 12 V écran. L'imprimante laser a sa propre prise directe avec parafoudre.",
-    spec:[["Sorties","4 prises, fixation par vis"],["Câblage","Goulotte verticale le long de la paroi arrière"]] },
+  { id:'screen', color:'#5B2BB5', name:'Écran iiyama ProLite TF1534MC-B7X', short:'Écran tactile 15"', dims:[337.5,265.5,44.5],
+    spec:[['Dimensions (L × H × P)','337,5 × 265,5 × 44,5 mm'],['Zone active','304 × 228 mm'],['Poids','2,7 kg'],['Fixation','VESA 100 × 100'],['Protection','IP65 en façade']],
+    links:[['Fiche iiyama','https://iiyama.com/gl_en/products/prolite-tf1534mc-b7x/'],['Amazon.ae','https://www.amazon.ae/iiyama-ProLite-TF1534MC-B7X-touchscreen-DisplayPort/dp/B08Y5XBGFT?th=1']] },
+  { id:'cam', color:'#E8903A', name:'Caméra Logitech C920 PRO HD', short:'Caméra 1080p', dims:[94,29,24],
+    spec:[['Boîtier (L × H × P)','94 × 29 × 24 mm'],['Avec clip','94 × 43,3 × 71 mm'],['Poids','162 g'],['Image','1080p 30 i/s, champ 78°'],['Liaison','USB, câble 1,5 m']],
+    links:[['Fiche Logitech','https://logitech.com/en-za/products/webcams/c920-pro-hd-webcam.html']] },
+  { id:'jetson', color:'#76B900', name:'NVIDIA Jetson Orin NX (Yahboom)', short:'Unité de calcul', dims:[100,21,79],
+    spec:[['Dimensions (L × P × H)','100 × 79 × 21 mm'],['Référence de taille','Carte au format du kit officiel NVIDIA'],['Alimentation','19 V, jusqu\'à 40 W']],
+    links:[['Fiche Yahboom','https://category.yahboom.net/fr/products/jetson-orin-nx'],['Cotes NVIDIA','https://core-electronics.com.au/nvidia-jetson-orin-nano-developer-kit.html']] },
+  { id:'printer', color:'#2F80C9', name:'Canon i-SENSYS MF3010', short:'Imprimante laser A4', dims:[372,254,276],
+    spec:[['Dimensions (L × P × H)','372 × 276 × 254 mm'],['Espace d\'installation','572 × 632 × 608 mm'],['Poids','8,2 kg'],['Consommation','≈ 450 W en impression, 960 W max'],['Température','10 à 30 °C']],
+    links:[['Fiche Canon','https://www.canon-europe.com/business/products/office-printers/multifunction/black-and-white/i-sensys_mf3010/specifications/index.html']] },
+  { id:'ups', color:'#3A3A42', name:'Onduleur APC Back-UPS BX500MI', short:'Onduleur 500 VA', dims:[98,138,310],
+    spec:[['Dimensions (L × H × P)','98 × 138 × 310 mm'],['Poids','4,2 kg'],['Puissance','500 VA / 300 W'],['Pose','Debout, tourné d\'un quart de tour']],
+    links:[['Fiche APC (Schneider)','https://www.se.com/lt/lt/product/BX500MI/apc-backups-500va-230v-avr-iec-lizdai/']] },
+  { id:'fans', color:'#8C8FA3', name:'2 × ventilateur ARCTIC P8', short:'Ventilation', dims:[80,80,25],
+    spec:[['Dimensions','80 × 80 × 25 mm'],['Entraxe de fixation','71,5 × 71,5 mm'],['Alimentation','12 V, 0,14 A']],
+    links:[['Fiche technique','https://1fotrade.com/ressources/site/document/product/fiche-technique-pour-arctic-p8_10522.pdf']] },
+  { id:'strip', color:'#C24E6B', name:'Multiprise interne', short:'Distribution électrique', dims:[260,45,45],
+    spec:[['Dimensions','≈ 260 × 45 × 45 mm (modèle générique)'],['Rôle','Sortie de l\'onduleur vers les alimentations']],
+    links:[] },
 ];
 
-const canvas = document.getElementById('c');
-const stage = document.getElementById('stage');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// ---------- Cotes borne (mm), modifiables ----------
+const K = { W:420, D:320, H1:1100, H:1480, t:18, base:80 };
+const KLABEL = { W:'Largeur extérieure', D:'Profondeur extérieure', H1:'Hauteur du fût', H:'Hauteur totale', t:'Épaisseur des parois', base:'Hauteur du socle' };
+const mm = v => v/1000;
+const TILT = THREE.MathUtils.degToRad(24);
+
+// ---------- Scène ----------
+const stage = document.getElementById('stage'), canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const labelR = new CSS2DRenderer({ element: document.getElementById('labels') });
 const scene = new THREE.Scene();
-const cam = new THREE.PerspectiveCamera(35,1,0.05,50);
-const HOME_POS = new THREE.Vector3(2.0,1.55,2.55), HOME_TGT = new THREE.Vector3(0,0.74,0.05);
-const EXP_POS = new THREE.Vector3(2.4,1.7,3.1);
-cam.position.copy(HOME_POS);
-const controls = new THREE.OrbitControls(cam, canvas);
-controls.target.copy(HOME_TGT);
-controls.enableDamping = true; controls.minDistance = 0.6; controls.maxDistance = 5; controls.maxPolarAngle = Math.PI*0.52;
-controls.update();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const cam = new THREE.PerspectiveCamera(32, 1, 0.02, 30);
+const HOME = { p:new THREE.Vector3(2.15,1.58,2.85), t:new THREE.Vector3(0,0.76,0.03) };
+const EXP  = { p:new THREE.Vector3(2.35,1.65,3.15), t:new THREE.Vector3(0,0.76,0.12) };
+cam.position.copy(HOME.p);
+const controls = new OrbitControls(cam, renderer.domElement);
+controls.target.copy(HOME.t); controls.enableDamping = true; controls.minDistance = .5; controls.maxDistance = 6; controls.maxPolarAngle = Math.PI*.52;
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x8a8aa0,0.75));
-const sun = new THREE.DirectionalLight(0xffffff,0.85);
-sun.position.set(1.5,3,2); sun.castShadow = true; sun.shadow.mapSize.set(1024,1024);
-Object.assign(sun.shadow.camera,{left:-1.2,right:1.2,top:2,bottom:-0.5,near:0.5,far:8});
-scene.add(sun);
-const fill = new THREE.DirectionalLight(0xffffff,0.3); fill.position.set(-2,1.5,-1); scene.add(fill);
-
-const floor = new THREE.Mesh(new THREE.CircleGeometry(1.6,64), new THREE.ShadowMaterial({opacity:0.18}));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(1.4,3.2,2.2); sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-1.2,right:1.2,top:2.2,bottom:-.4,near:.5,far:8}); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+scene.add(sun, new THREE.HemisphereLight(0xffffff,0x9a98ac,0.35));
+const floor = new THREE.Mesh(new THREE.CircleGeometry(2,64), new THREE.ShadowMaterial({opacity:.22}));
 floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
-const ring = new THREE.Mesh(new THREE.RingGeometry(1.2,1.205,96), new THREE.MeshBasicMaterial({color:0x9a96b0,transparent:true,opacity:.5}));
-ring.rotation.x = -Math.PI/2; ring.position.y = 0.001; scene.add(ring);
 
-const std = (c,o={}) => new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.55,metalness:.05},o));
-function box(w,h,d,mat){ const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.castShadow = true; m.receiveShadow = true; return m; }
-function canvasTex(w,h,draw){ const c = document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h); const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t; }
-
-// ---------- Shell ----------
-const shellMat = std(0xF4F4F7,{roughness:.7});
-const shell = new THREE.Group(); scene.add(shell);
-const W = 0.42, D = 0.32;
-const plinth = box(0.48,0.08,0.40,std(0xE4E4EA)); plinth.position.set(0,0.04,-0.01); shell.add(plinth);
-const body = box(W,1.02,D,shellMat); body.position.set(0,0.59,0); shell.add(body);
-// sloped head
-const prof = new THREE.Shape();
-const P = [[-0.16,1.10],[0.17,1.10],[0.0,1.48],[-0.16,1.48]];
-prof.moveTo(-P[0][0],P[0][1]); for(let i=1;i<P.length;i++) prof.lineTo(-P[i][0],P[i][1]); prof.closePath();
-const hg = new THREE.ExtrudeGeometry(prof,{depth:W,bevelEnabled:false});
-hg.rotateY(Math.PI/2); hg.translate(-W/2,0,0);
-const head = new THREE.Mesh(hg,shellMat); head.castShadow = true; shell.add(head);
-const TILT = Math.atan2(0.17,0.38); // screen normal elevation (~24°)
-const slope = t => new THREE.Vector3(0, 1.10+0.38*t, 0.17-0.17*t);
-const nrm = new THREE.Vector3(0,Math.sin(TILT),Math.cos(TILT));
-
-// welcome band
-const bandTex = canvasTex(1024,410,(g,w,h)=>{ g.fillStyle='#5B2BB5'; g.fillRect(0,0,w,h); g.fillStyle='#fff'; g.textAlign='center';
-  g.font='600 150px "Segoe UI", Tahoma, Arial, sans-serif'; g.fillText('مرحبا بكم',w/2,170); g.font='700 140px "Barlow Condensed", Arial, sans-serif'; g.fillText('BIENVENUE',w/2,340); });
-const band = new THREE.Mesh(new THREE.PlaneGeometry(W,0.16), new THREE.MeshBasicMaterial({map:bandTex})); band.position.set(0,0.99,D/2+0.001); shell.add(band);
-// ticket slot plate
-const slotTex = canvasTex(512,256,(g,w,h)=>{ g.fillStyle='#EDEBF5'; g.fillRect(0,0,w,h); g.fillStyle='#2A2440'; g.fillRect(40,40,432,30);
-  g.fillStyle='#5B2BB5'; g.textAlign='center'; g.font='600 38px Barlow, Arial, sans-serif'; g.fillText('Feuille de soins A4',w/2,140); });
-const slot = new THREE.Mesh(new THREE.PlaneGeometry(0.28,0.14), new THREE.MeshBasicMaterial({map:slotTex})); slot.position.set(0,0.735,D/2+0.001); shell.add(slot);
-// side vents
-[[-1,0.95],[1,0.95],[-1,0.30],[1,0.30]].forEach(([s,y])=>{ for(let i=0;i<5;i++){ const v = box(0.002,0.008,0.16,std(0x2A2830)); v.castShadow=false; v.position.set(s*(W/2+0.001),y+i*0.018-0.036,-0.02); shell.add(v);} });
-const shellMeshes = []; shell.traverse(o=>{ if(o.isMesh) shellMeshes.push(o); });
-
-// ---------- Components ----------
-const comps = {};
-function comp(id){ const g = new THREE.Group(); g.userData.id = id; scene.add(g); comps[id] = {g, base:new THREE.Vector3(), off:new THREE.Vector3(), mats:[]}; return g; }
-function register(id){ const c = comps[id]; c.base.copy(c.g.position); c.g.traverse(o=>{ if(o.isMesh){ o.userData.id = id; if(o.material.emissive) c.mats.push(o.material);} }); }
-
-// 1 screen
-{ const g = comp('screen');
-  const p = slope(0.47); g.position.copy(p); g.rotation.x = -TILT;
-  const back = box(0.3375,0.2655,0.0445,std(0x1C1B22,{roughness:.4})); back.position.z = -0.0445/2+0.004; g.add(back);
-  const uiTex = canvasTex(1024,768,(x,w,h)=>{ x.fillStyle='#F7F7FA'; x.fillRect(0,0,w,h);
-    x.fillStyle='#5B2BB5'; x.font='800 54px Barlow, Arial, sans-serif'; x.fillText('CNASS',48,86);
+// ---------- Matériaux ----------
+const M = {
+  shell: new THREE.MeshPhysicalMaterial({ color:0xF3F3F6, roughness:.42, clearcoat:.35, clearcoatRoughness:.3 }),
+  base:  new THREE.MeshStandardMaterial({ color:0xD9DAE2, roughness:.55 }),
+  inner: new THREE.MeshStandardMaterial({ color:0xB8BAC6, roughness:.6, metalness:.2 }),
+  black: new THREE.MeshStandardMaterial({ color:0x17171B, roughness:.45 }),
+  dark:  new THREE.MeshStandardMaterial({ color:0x2A2A31, roughness:.35, metalness:.1 }),
+  glass: new THREE.MeshPhysicalMaterial({ color:0x0B0B10, roughness:.05, metalness:.1, clearcoat:1 }),
+  alu:   new THREE.MeshStandardMaterial({ color:0x9EA3AD, roughness:.3, metalness:.85 }),
+  pcb:   new THREE.MeshStandardMaterial({ color:0x1C3A22, roughness:.6 }),
+  green: new THREE.MeshStandardMaterial({ color:0x76B900, roughness:.5 }),
+  port:  new THREE.MeshStandardMaterial({ color:0x8E939C, roughness:.3, metalness:.9 }),
+  white: new THREE.MeshStandardMaterial({ color:0xF6F6F4, roughness:.8, side:THREE.DoubleSide }),
+  grey:  new THREE.MeshStandardMaterial({ color:0x55586A, roughness:.5 }),
+  strip: new THREE.MeshStandardMaterial({ color:0xEEEEF0, roughness:.6 }),
+  cable: new THREE.MeshStandardMaterial({ color:0x121216, roughness:.8 }),
+};
+function tex(w,h,draw){ const c=document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t; }
+const T = {
+  ui: tex(1024,768,(x,w,h)=>{ x.fillStyle='#F7F7FA'; x.fillRect(0,0,w,h); x.fillStyle='#5B2BB5'; x.font='800 54px Barlow, Arial, sans-serif'; x.fillText('CNASS',48,86);
     x.fillStyle='#1B1830'; x.textAlign='center'; x.font='700 50px Barlow, Arial, sans-serif'; x.fillText('Entrez votre numéro CNASS',w/2,210);
     x.strokeStyle='#C9C6D8'; x.lineWidth=4; x.strokeRect(312,245,400,70);
-    const keys=['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
-    keys.forEach((k,i)=>{ const cx=372+(i%3)*140, cy=350+Math.floor(i/3)*98; x.fillStyle = k==='✓'?'#3FA35C':'#ECEBF3'; x.fillRect(cx-58,cy,116,84); x.fillStyle = k==='✓'?'#fff':'#1B1830'; x.font='700 44px Barlow, Arial, sans-serif'; x.fillText(k,cx,cy+58); });
+    ['1','2','3','4','5','6','7','8','9','⌫','0','✓'].forEach((k,i)=>{ const cx=372+(i%3)*140, cy=350+Math.floor(i/3)*98; x.fillStyle=k==='✓'?'#3FA35C':'#ECEBF3'; x.fillRect(cx-58,cy,116,84); x.fillStyle=k==='✓'?'#fff':'#1B1830'; x.font='700 44px Barlow, Arial, sans-serif'; x.fillText(k,cx,cy+58); }); }),
+  band: tex(1024,390,(g,w,h)=>{ g.fillStyle='#5B2BB5'; g.fillRect(0,0,w,h); g.fillStyle='#fff'; g.textAlign='center'; g.font='600 140px "Segoe UI", Tahoma, Arial, sans-serif'; g.fillText('مرحبا بكم',w/2,165); g.font='700 132px "Barlow Condensed", Arial, sans-serif'; g.fillText('BIENVENUE',w/2,330); }),
+  slot: tex(512,200,(g,w,h)=>{ g.fillStyle='#ECEAF4'; g.fillRect(0,0,w,h); g.fillStyle='#5B2BB5'; g.textAlign='center'; g.font='600 34px Barlow, Arial, sans-serif'; g.fillText('Feuille de soins A4',w/2,165); }),
+  logo: tex(512,128,(g,w,h)=>{ g.clearRect(0,0,w,h); g.fillStyle='#E8903A'; g.beginPath(); g.arc(40,64,14,0,7); g.fill(); g.fillStyle='#5B2BB5'; g.font='800 84px Barlow, Arial, sans-serif'; g.fillText('CNASS',66,94); }),
+};
+const box = (w,h,d,m,r=0) => { const g = r>0 ? new RoundedBoxGeometry(w,h,d,3,Math.min(r,w/2-1e-4,h/2-1e-4,d/2-1e-4)) : new THREE.BoxGeometry(w,h,d); const o = new THREE.Mesh(g,m); o.castShadow = o.receiveShadow = true; return o; };
+const cyl = (r,h,m,seg=32) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),m); o.castShadow = true; return o; };
+const plane = (w,h,m) => new THREE.Mesh(new THREE.PlaneGeometry(w,h), m);
+
+// ---------- Construction ----------
+let world = null, comps = {}, shellMeshes = [], decals = [], dimsGroup = null, cables = null, labels = {};
+function disposeWorld(){
+  if(!world) return;
+  Object.values(labels).forEach(l=>l.element.remove());
+  if(dimsGroup) dimsGroup.traverse(o=>{ if(o.isCSS2DObject) o.element.remove(); });
+  world.traverse(o=>{ if(o.isMesh||o.isLine){ o.geometry.dispose(); } });
+  scene.remove(world);
+}
+function comp(id, parent){ const g = new THREE.Group(); g.userData.id = id; parent.add(g); comps[id] = { g, base:new THREE.Vector3(), off:new THREE.Vector3(), meshes:[] }; return g; }
+function done(id, off){ const c = comps[id]; c.base.copy(c.g.position); c.off.set(...off); c.g.traverse(o=>{ if(o.isMesh){ o.userData.id = id; c.meshes.push(o); } }); }
+
+function build(){
+  disposeWorld(); comps = {}; shellMeshes = []; decals = []; labels = {};
+  world = new THREE.Group(); scene.add(world);
+  const W=mm(K.W), D=mm(K.D), H1=mm(K.H1), H=mm(K.H), t=mm(K.t), B=mm(K.base);
+  const iw = W-2*t, id = D-2*t;
+
+  // --- Coque ---
+  const shell = new THREE.Group(); world.add(shell);
+  const socle = box(W+0.06, B, D+0.08, M.base, 0.01); socle.position.set(0,B/2,-0.01); shell.add(socle);
+  const fut = box(W, H1-B, D, M.shell, 0.014); fut.position.set(0, B+(H1-B)/2, 0); shell.add(fut);
+  const rise = H-H1, run = rise*Math.tan(TILT), zf = D/2+0.012, zt = zf-run;
+  const prof = new THREE.Shape();
+  [[-D/2,H1],[zf,H1],[zt,H],[-D/2,H]].forEach(([z,y],i)=> i? prof.lineTo(-z,y) : prof.moveTo(-z,y));
+  prof.closePath();
+  const hg = new THREE.ExtrudeGeometry(prof,{ depth:W-0.008, bevelEnabled:true, bevelThickness:0.004, bevelSize:0.004, bevelSegments:3 });
+  hg.rotateY(Math.PI/2); hg.translate(-(W-0.008)/2,0,0);
+  const head = new THREE.Mesh(hg, M.shell); head.castShadow = head.receiveShadow = true; shell.add(head);
+  shell.traverse(o=>{ if(o.isMesh) shellMeshes.push(o); });
+  // décors façade
+  const band = plane(W-0.02, 0.15, new THREE.MeshBasicMaterial({map:T.band, transparent:true})); band.position.set(0, H1-0.1, D/2+0.0015); shell.add(band); decals.push(band);
+  // grilles d'aération latérales
+  [[-1,H1-0.16],[1,H1-0.16],[-1,B+0.2],[1,B+0.2]].forEach(([s,y])=>{ for(let i=0;i<6;i++){ const v = box(0.002,0.007,0.15,M.black); v.castShadow=false; v.position.set(s*(W/2+0.001), y+i*0.016-0.04, -0.03); shell.add(v); decals.push(v);} });
+
+  // --- Étagères intérieures ---
+  const pShelfY = 0.55;
+  const s1 = box(iw, 0.008, id, M.inner); s1.position.set(0, pShelfY-0.004, 0); world.add(s1);
+  const jShelfY = pShelfY + mm(254) + 0.12;
+  const s2 = box(iw, 0.006, id*0.9, M.inner); s2.position.set(0, jShelfY-0.003, -id*0.05); world.add(s2);
+
+  // --- Écran iiyama ---
+  { const g = comp('screen', world);
+    const sw=mm(337.5), sh=mm(265.5), sd=mm(44.5);
+    const L = rise/Math.cos(TILT), tmid = 0.46;
+    g.position.set(0, H1 + rise*tmid, zf - run*tmid); g.rotation.x = -TILT;
+    const bodyS = box(sw, sh, sd, M.black, 0.004); bodyS.position.z = -sd/2 + 0.003; g.add(bodyS);
+    const gl = box(sw-0.002, sh-0.002, 0.003, M.glass, 0.0015); gl.position.z = 0.0035; g.add(gl);
+    const disp = plane(mm(304), mm(228), new THREE.MeshBasicMaterial({map:T.ui, toneMapped:false})); disp.position.z = 0.0052; g.add(disp);
+    const vesa = box(0.11,0.11,0.006,M.alu); vesa.position.z = -sd+0.001; g.add(vesa);
+    g.userData.slopeLen = L;
+    done('screen',[0,0.1,0.45]); }
+  // logo au-dessus de l'écran
+  { const L = rise/Math.cos(TILT); const t0 = 0.46 + (mm(265.5)/2+0.018)/L;
+    const lg = plane(0.14,0.035,new THREE.MeshBasicMaterial({map:T.logo,transparent:true}));
+    lg.position.set(-W/2+0.1, H1+rise*t0, zf-run*t0); lg.position.addScaledVector(new THREE.Vector3(0,Math.sin(TILT),Math.cos(TILT)),0.002); lg.rotation.x=-TILT; shell.add(lg); decals.push(lg); }
+
+  // --- Caméra Logitech C920 ---
+  { const g = comp('cam', world);
+    g.position.set(0, H + mm(29)/2 + 0.004, zt + 0.004); g.rotation.x = THREE.MathUtils.degToRad(-8);
+    const bodyC = box(mm(94), mm(29), mm(24), M.dark, 0.012); g.add(bodyC);
+    const lens = cyl(0.0085,0.003,M.glass); lens.rotation.x = Math.PI/2; lens.position.z = mm(12)+0.001; g.add(lens);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.0095,0.0012,12,40), M.alu); ring.position.z = mm(12)+0.0015; g.add(ring);
+    [-1,1].forEach(s=>{ const mic = box(0.012,0.002,0.001,M.grey); mic.position.set(s*0.03,0,mm(12)+0.0005); g.add(mic); });
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.0015,8,8), new THREE.MeshBasicMaterial({color:0x41D16F})); led.position.set(0.017,0.004,mm(12)+0.0006); g.add(led);
+    const clip = box(0.03, 0.004, mm(71)-mm(24), M.dark, 0.0015); clip.position.set(0,-mm(29)/2-0.002,-(mm(71)-mm(24))/2); g.add(clip);
+    done('cam',[0,0.22,0.55]); }
+
+  // --- Jetson Orin NX ---
+  { const g = comp('jetson', world);
+    g.position.set(0.03, jShelfY, -0.02);
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>{ const f = cyl(0.003,0.004,M.black,12); f.position.set(a*0.045,0.002,b*0.034); g.add(f); });
+    const pcb = box(mm(100),0.0016,mm(79),M.pcb); pcb.position.y = 0.0048; g.add(pcb);
+    const mod = box(0.0696,0.003,0.045,M.pcb); mod.position.set(-0.005,0.0075,-0.008); g.add(mod);
+    const sink = box(0.062,0.004,0.042,M.alu); sink.position.set(-0.005,0.011,-0.008); g.add(sink);
+    for(let i=0;i<9;i++){ const fin = box(0.0015,0.006,0.042,M.alu); fin.position.set(-0.034+i*0.0073,0.016,-0.008); g.add(fin); }
+    const fan = cyl(0.018,0.004,M.black); fan.position.set(-0.005,0.019,-0.008); g.add(fan);
+    const hub = cyl(0.006,0.0045,M.green); hub.position.set(-0.005,0.0195,-0.008); g.add(hub);
+    for(let i=0;i<4;i++){ const u = box(0.013,0.014,0.017,M.port); u.position.set(-0.04+i*0.016,0.0126,0.0305); g.add(u); }
+    const rj = box(0.016,0.013,0.018,M.port); rj.position.set(0.033,0.012,0.030); g.add(rj);
+    const dc = cyl(0.004,0.01,M.black,12); dc.rotation.x = Math.PI/2; dc.position.set(0.045,0.011,0.03); g.add(dc);
+    [-1,1].forEach(s=>{ const a = cyl(0.0045,0.105,M.black,12); a.position.set(s*0.035,0.06,-0.042); a.rotation.z = s*0.18; g.add(a); });
+    const psu = box(0.1,0.03,0.06,M.dark,0.006); psu.position.set(-0.12,0.015,0.02); g.add(psu);
+    done('jetson',[0.45,0.12,0.3]); }
+
+  // --- Canon MF3010 ---
+  { const g = comp('printer', world);
+    const pw=mm(372), ph=mm(254), pd=mm(276);
+    g.position.set(0, pShelfY, D/2 - t - pd/2 - 0.004);
+    const lower = box(pw, ph-0.058, pd, M.black, 0.012); lower.position.y = (ph-0.058)/2; g.add(lower);
+    const lid = box(pw, 0.052, pd-0.004, M.dark, 0.01); lid.position.y = ph-0.026; g.add(lid);
+    const slotF = box(pw*0.62, 0.028, 0.03, new THREE.MeshStandardMaterial({color:0x07070a,roughness:.9})); slotF.position.set(-0.02, ph-0.078, pd/2-0.012); g.add(slotF);
+    const sheet = plane(mm(210), 0.16, M.white); sheet.position.set(-0.02, ph-0.072, pd/2+0.06); sheet.rotation.x = -Math.PI/2+0.25; sheet.castShadow = true; g.add(sheet);
+    const panel = box(0.028,0.07,0.012,M.dark,0.004); panel.position.set(pw/2-0.03, ph-0.09, pd/2+0.002); g.add(panel);
+    const led = plane(0.012,0.016,new THREE.MeshBasicMaterial({color:0xE0472E})); led.position.set(pw/2-0.03, ph-0.075, pd/2+0.0085); g.add(led);
+    const tray = box(pw*0.66,0.012,0.02,M.dark,0.004); tray.position.set(0,0.03,pd/2+0.004); g.add(tray);
+    const brand = plane(0.06,0.012,new THREE.MeshBasicMaterial({color:0xC8C8CE})); brand.position.set(-pw/2+0.06,ph-0.12,pd/2+0.0005); g.add(brand);
+    done('printer',[-0.52,0.02,0.45]); }
+  // fente A4 en façade
+  { const y = pShelfY + mm(254) - 0.075;
+    const plate = plane(0.3,0.1,new THREE.MeshBasicMaterial({map:T.slot, transparent:true})); plate.position.set(-0.02,y-0.012,D/2+0.0016); shell.add(plate); decals.push(plate);
+    const slit = plane(0.24,0.02,new THREE.MeshBasicMaterial({color:0x14121c})); slit.position.set(-0.02,y+0.022,D/2+0.0018); shell.add(slit); decals.push(slit); }
+
+  // --- APC BX500MI (debout, tourné) ---
+  { const g = comp('ups', world);
+    g.position.set(0, B + mm(138)/2 + 0.002, 0.01); g.rotation.y = Math.PI/2;
+    const u = box(mm(98), mm(138), mm(310), M.black, 0.01); g.add(u);
+    const face = box(mm(98)-0.012, mm(138)-0.02, 0.004, M.dark, 0.004); face.position.z = mm(310)/2; g.add(face);
+    const btn = cyl(0.009,0.004,M.grey); btn.rotation.x = Math.PI/2; btn.position.set(0,0.03,mm(310)/2+0.003); g.add(btn);
+    const ledU = new THREE.Mesh(new THREE.CircleGeometry(0.0035,16), new THREE.MeshBasicMaterial({color:0x33CC66})); ledU.position.set(0,0.052,mm(310)/2+0.0025); g.add(ledU);
+    done('ups',[0,0,0.55]); }
+
+  // --- Ventilateurs ARCTIC P8 ---
+  { const g = comp('fans', world);
+    g.position.set(0,0,-D/2 + t + mm(25)/2 + 0.002);
+    [B+0.24, H1-0.12].forEach((y,k)=>{ const f = new THREE.Group(); f.position.set(k? 0.1 : -0.1, y, 0);
+      [[0,0.0375,0.08,0.005],[0,-0.0375,0.08,0.005],[0.0375,0,0.005,0.08],[-0.0375,0,0.005,0.08]].forEach(([x,yy,w,h])=>{ const b = box(w,h,mm(25),M.dark); b.position.set(x,yy,0); f.add(b); });
+      const hubF = cyl(0.014,mm(25)*0.8,M.dark); hubF.rotation.x = Math.PI/2; f.add(hubF);
+      for(let i=0;i<5;i++){ const bl = box(0.028,0.012,0.0025,M.grey); bl.position.set(Math.cos(i*1.2566)*0.022,Math.sin(i*1.2566)*0.022,0); bl.rotation.z = i*1.2566+0.5; f.add(bl); }
+      g.add(f); });
+    done('fans',[0,0,-0.45]); }
+
+  // --- Multiprise ---
+  { const g = comp('strip', world);
+    g.position.set(-0.02, B + mm(138) + 0.06, -D/2 + t + 0.03);
+    const s = box(mm(260),mm(45),mm(45),M.strip,0.008); g.add(s);
+    for(let i=0;i<4;i++){ const o = cyl(0.014,0.002,M.grey,24); o.position.set(-0.09+i*0.055,mm(45)/2+0.001,0); g.add(o); }
+    const sw = box(0.018,0.008,0.02,new THREE.MeshStandardMaterial({color:0xC24E6B})); sw.position.set(0.12,mm(45)/2+0.004,0); g.add(sw);
+    done('strip',[-0.3,0,-0.45]); }
+
+  // --- Câbles ---
+  cables = new THREE.Group(); world.add(cables);
+  const J = comps.jetson.base, S = comps.strip.base, P = comps.printer.base, C = comps.cam.base, SC = comps.screen.base;
+  const cab = pts => { const c = new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p))); const m = new THREE.Mesh(new THREE.TubeGeometry(c,48,0.0035,8,false),M.cable); m.castShadow = true; cables.add(m); };
+  cab([[S.x-0.1,S.y,S.z],[-iw/2+0.03,S.y+0.2,S.z],[-iw/2+0.03,J.y,J.z],[J.x-0.12,J.y+0.02,J.z+0.02]]);
+  cab([[J.x-0.04,J.y+0.015,J.z+0.035],[-0.05,J.y+0.1,0.02],[SC.x-0.05,SC.y-0.05,SC.z-0.06]]);
+  cab([[J.x+0.02,J.y+0.015,J.z+0.035],[0.1,J.y+0.2,-0.05],[C.x+0.02,C.y-0.02,C.z-0.03]]);
+  cab([[J.x+0.0,J.y+0.012,J.z+0.035],[0.14,J.y-0.05,0.05],[0.14,P.y+0.2,P.z-0.14]]);
+  cab([[S.x+0.1,S.y,S.z],[iw/2-0.03,S.y+0.1,S.z],[iw/2-0.03,P.y+0.05,P.z-0.14]]);
+
+  // --- Étiquettes ---
+  PARTS.forEach(p=>{
+    const el = document.createElement('div');
+    const inner = document.createElement('div'); inner.className = 'lbl'; inner.dataset.id = p.id; el.appendChild(inner);
+    inner.innerHTML = `<i style="background:${p.color}"></i><span>${p.short}<small>${p.dims.map(v=>String(v).replace('.',',')).join(' × ')} mm</small></span>`;
+    inner.addEventListener('pointerdown', e=>{ e.stopPropagation(); select(p.id,true); });
+    const LO = { fans:[70,0], jetson:[-45,0], strip:[40,-4], ups:[-30,0] }[p.id] || [0,0];
+    inner.style.transform = `translate(${LO[0]}px, ${LO[1]-16}px)`;
+    const o = new CSS2DObject(el); world.add(o); labels[p.id] = o;
   });
-  const disp = new THREE.Mesh(new THREE.PlaneGeometry(0.304,0.228), new THREE.MeshBasicMaterial({map:uiTex})); disp.position.z = 0.0065; g.add(disp);
-  register('screen'); comps.screen.off.set(0,0.08,0.42);
-}
-// 2 camera
-{ const g = comp('cam');
-  g.position.copy(slope(0.93)).addScaledVector(nrm,0.012); g.rotation.x = -TILT*0.55;
-  const hsg = box(0.085,0.03,0.035,std(0x1E1D24,{roughness:.35})); g.add(hsg);
-  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.009,0.009,0.006,24), std(0x0B0B10,{metalness:.6,roughness:.2})); lens.rotation.x = Math.PI/2; lens.position.z = 0.019; g.add(lens);
-  const led = new THREE.Mesh(new THREE.SphereGeometry(0.002,8,8), new THREE.MeshBasicMaterial({color:0x3FD06A})); led.position.set(0.028,0,0.018); g.add(led);
-  register('cam'); comps.cam.off.set(0,0.2,0.5);
-}
-// 3 jetson
-{ const g = comp('jetson'); g.position.set(0,0.935,-0.02);
-  const shelf = box(0.34,0.008,0.27,std(0xB9BAC4)); shelf.position.y = -0.006; g.add(shelf);
-  const pcb = box(0.103,0.004,0.09,std(0x1D2A1A,{roughness:.6})); pcb.position.y = 0.012; g.add(pcb);
-  const sink = box(0.07,0.028,0.065,std(0x2B2B30,{metalness:.5,roughness:.35})); sink.position.y = 0.028; g.add(sink);
-  const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.026,0.026,0.004,32), std(0x76B900,{roughness:.5})); fan.position.y = 0.044; g.add(fan);
-  [[-0.045,1],[0.045,-1]].forEach(([x,s])=>{ const a = new THREE.Mesh(new THREE.CylinderGeometry(0.005,0.005,0.11,12), std(0x151518)); a.position.set(x,0.07,-0.04); a.rotation.z = s*0.25; a.castShadow = true; g.add(a); });
-  const psu = box(0.11,0.03,0.05,std(0x26262C)); psu.position.set(-0.11,0.02,0.06); g.add(psu);
-  register('jetson'); comps.jetson.off.set(0.42,0.12,0.25);
-}
-// 4 printer (Canon MF3010)
-{ const g = comp('printer'); g.position.set(0,0.55+0.127,0.012);
-  const shelf2 = box(0.40,0.008,0.28,std(0xB9BAC4)); shelf2.position.y = -0.131; g.add(shelf2);
-  const bodyP = box(0.372,0.20,0.276,std(0x1F1F24,{roughness:.5})); bodyP.position.y = -0.027; g.add(bodyP);
-  const lid = box(0.372,0.05,0.276,std(0x2B2B31,{roughness:.35})); lid.position.y = 0.1; g.add(lid);
-  const glass = box(0.30,0.002,0.2,std(0x2F80C9,{roughness:.2,metalness:.3})); glass.position.set(0,0.126,-0.01); g.add(glass);
-  const panel = box(0.05,0.03,0.01,std(0x3A3A44)); panel.position.set(0.15,0.09,0.14); g.add(panel);
-  const sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.21,0.16), new THREE.MeshStandardMaterial({color:0xffffff,side:THREE.DoubleSide,roughness:.9}));
-  sheet.position.set(0,0.085,0.19); sheet.rotation.x = -1.25; g.add(sheet);
-  register('printer'); comps.printer.off.set(-0.5,0.02,0.45);
-}
-// 5 UPS
-{ const g = comp('ups'); g.position.set(0,0.08+0.069+0.004,0.0);
-  const u = box(0.31,0.138,0.098,std(0x232327,{roughness:.45})); g.add(u);
-  const led = new THREE.Mesh(new THREE.CircleGeometry(0.006,16), new THREE.MeshBasicMaterial({color:0x33CC66})); led.position.set(0.12,0.03,0.0495); g.add(led);
-  const btn = new THREE.Mesh(new THREE.CircleGeometry(0.01,20), std(0x44444C)); btn.position.set(0.12,0.0,0.0495); g.add(btn);
-  register('ups'); comps.ups.off.set(0,0,0.55);
-}
-// 6 fans
-{ const g = comp('fans'); g.position.set(0,0,-D/2+0.02);
-  [0.30,0.95].forEach(y=>{ const f = new THREE.Group(); f.position.set(0.1,y,0);
-    const fr = box(0.08,0.08,0.025,std(0x55586A)); f.add(fr);
-    const bl = new THREE.Mesh(new THREE.CylinderGeometry(0.034,0.034,0.027,24), std(0x8C8FA3)); bl.rotation.x = Math.PI/2; f.add(bl);
-    g.add(f); });
-  register('fans'); comps.fans.off.set(0,0,-0.45);
-}
-// 7 strip
-{ const g = comp('strip'); g.position.set(-0.03,0.26,-D/2+0.045);
-  const s = box(0.26,0.04,0.05,std(0xF0F0F2)); g.add(s);
-  for(let i=0;i<4;i++){ const o = new THREE.Mesh(new THREE.CircleGeometry(0.012,20), std(0x3A3A42)); o.position.set(-0.09+i*0.06,0.0201,0); o.rotation.x = -Math.PI/2; g.add(o); }
-  const sw = box(0.02,0.012,0.02,std(0xC24E6B)); sw.position.set(0.115,0.026,0); g.add(sw);
-  register('strip'); comps.strip.off.set(-0.3,0,-0.45);
+
+  // --- Cotes ---
+  dimsGroup = new THREE.Group(); world.add(dimsGroup);
+  const lm = new THREE.LineBasicMaterial({ color:0xE8903A });
+  const dimLine = (a,b,text,lp) => { const g = new THREE.BufferGeometry().setFromPoints([a,b]); dimsGroup.add(new THREE.Line(g,lm));
+    const e = document.createElement('div'); e.className='dim'; e.textContent = text; const o = new CSS2DObject(e); o.position.copy(lp); dimsGroup.add(o); };
+  const xR = W/2+0.08, zF = D/2+0.06;
+  dimLine(new THREE.Vector3(xR,0,-D/2), new THREE.Vector3(xR,H,-D/2), `${K.H} mm`, new THREE.Vector3(xR+0.02,H/2,-D/2));
+  dimLine(new THREE.Vector3(-W/2,0.002,zF+0.05), new THREE.Vector3(W/2,0.002,zF+0.05), `${K.W} mm`, new THREE.Vector3(0,0.03,zF+0.07));
+  dimLine(new THREE.Vector3(xR,0.002,-D/2), new THREE.Vector3(xR,0.002,D/2), `${K.D} mm`, new THREE.Vector3(xR+0.03,0.03,0));
+  dimLine(new THREE.Vector3(-W/2-0.08,0,0), new THREE.Vector3(-W/2-0.08,SC.y,0), `centre écran ${Math.round(SC.y*1000)} mm`, new THREE.Vector3(-W/2-0.1,SC.y*0.62,0));
+  dimLine(new THREE.Vector3(-W/2-0.16,0,D/2), new THREE.Vector3(-W/2-0.16,pShelfY+mm(254)-0.053,D/2), `sortie A4 ${Math.round((pShelfY+mm(254)-0.053)*1000)} mm`, new THREE.Vector3(-W/2-0.18,0.38,D/2));
+  setDimsVisible(showDims);
+
+  // --- Vérifications ---
+  const L = rise/Math.cos(TILT);
+  const checks = [
+    ['screen', 'Écran dans la tête', `${(iw*1000).toFixed(0)} mm de large pour 337,5 mm ; pente de ${(L*1000).toFixed(0)} mm pour 265,5 mm`, iw*1000-337.5, L*1000-265.5-30],
+    ['printer','Imprimante dans le fût', `largeur intérieure ${(iw*1000).toFixed(0)} mm pour 372 mm ; profondeur ${(id*1000).toFixed(0)} mm pour 276 mm`, iw*1000-372, id*1000-276],
+    ['ups',    'Onduleur au sol', `${(iw*1000).toFixed(0)} mm pour 310 mm ; ${(id*1000).toFixed(0)} mm pour 98 mm`, iw*1000-310, id*1000-98],
+    ['jetson', 'Jetson sur son étagère', `étagère à ${Math.round(jShelfY*1000)} mm, sommet du fût à ${K.H1} mm`, K.H1 - Math.round(jShelfY*1000) - 21 - 100],
+    ['printer','Espace entre imprimante et Jetson', `${Math.round((jShelfY-pShelfY-mm(254))*1000)} mm libres au-dessus de l'imprimante`, (jShelfY-pShelfY-mm(254))*1000-60],
+    ['strip',  'Onduleur et multiprise sous l\'imprimante', `${Math.round((pShelfY - (B+mm(138)+0.06+mm(45)/2))*1000)} mm libres`, (pShelfY - (B+mm(138)+0.06+mm(45)/2))*1000-40],
+  ];
+  const res = checks.map(([pid,title,detail,...m])=>({pid,title,detail,margin:Math.min(...m)}));
+  document.getElementById('checks').innerHTML = res.map(r=>`<li class="${r.margin>=0?'ok':'bad'}"><span class="ic">${r.margin>=0?'✓':'✗'}</span><span>${r.title}<small>${r.detail}${r.margin>=0?` · marge ${Math.round(r.margin)} mm`:` · manque ${Math.round(-r.margin)} mm`}</small></span></li>`).join('');
+  const fits = {}; res.forEach(r=>{ fits[r.pid] = (fits[r.pid]??true) && r.margin>=0; });
+  PARTS.forEach(p=>{ const st = document.querySelector(`#p-${p.id} .st`); const ok = fits[p.id] ?? true; st.className = 'st '+(ok?'ok':'bad'); st.textContent = ok?'Rentre':'Ne rentre pas'; });
+  const nBad = res.filter(r=>r.margin<0).length;
+  document.getElementById('noteFit').textContent = nBad ? `${nBad} point(s) bloquant(s) avec ces cotes : agrandissez la borne ou changez l'équipement concerné.` : `Tous les équipements rentrent avec ces cotes. Confirmez-les par une mesure réelle de la borne avant découpe.`;
+
+  applyView(view, true); select(selected);
 }
 
-// cables (hidden when exploded)
-const cables = new THREE.Group(); scene.add(cables);
-const cableMat = std(0x121216,{roughness:.8});
-function cable(pts){ const c = new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p))); cables.add(new THREE.Mesh(new THREE.TubeGeometry(c,40,0.004,6,false),cableMat)); }
-cable([[0.14,0.2,-0.04],[0.16,0.24,-0.1],[0.08,0.26,-0.12]]);
-cable([[-0.06,0.28,-0.12],[-0.15,0.5,-0.12],[-0.15,0.9,-0.1],[-0.1,0.95,0.01]]);
-cable([[0.0,0.29,-0.12],[-0.12,0.45,-0.12],[-0.06,0.62,-0.06]]);
-cable([[0.04,0.96,-0.02],[0.1,1.05,0.0],[0.06,1.18,0.07]]);
-cable([[0.02,0.96,-0.04],[0.12,1.2,-0.04],[0.02,1.43,0.02]]);
-cable([[-0.02,0.95,0.02],[-0.1,0.82,0.02],[-0.04,0.71,-0.02]]);
-
-// ---------- Views ----------
-let view = 'xray', selected = null;
-function applyView(v){
-  view = v;
-  document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===v));
-  const see = v!=='closed';
-  shellMeshes.forEach(m=>{ m.material.transparent = see; m.material.opacity = see?0.14:1; m.material.depthWrite = !see; m.castShadow = !see; m.material.needsUpdate = true; });
-  band.material.opacity = see?0.25:1; band.material.transparent = see; slot.material.opacity = see?0.25:1; slot.material.transparent = see;
-  cables.visible = v==='xray';
-}
-document.querySelectorAll('.views button').forEach(b=>b.addEventListener('click',()=>{ const was = view; applyView(b.dataset.v); if(b.dataset.v==='explode' && was!=='explode') flyTo(EXP_POS,HOME_TGT); if(was==='explode' && b.dataset.v!=='explode') flyTo(HOME_POS,HOME_TGT); }));
-document.getElementById('reset').addEventListener('click',()=>{ flyTo(view==='explode'?EXP_POS:HOME_POS,HOME_TGT); });
-
-let fly = null;
-function flyTo(pos,tgt){ fly = {p0:cam.position.clone(),t0:controls.target.clone(),p1:pos.clone(),t1:tgt.clone(),k:0}; }
-
-// ---------- Panel ----------
+// ---------- Panneau ----------
 const list = document.getElementById('parts');
 PARTS.forEach(p=>{
   const li = document.createElement('li'); li.id = 'p-'+p.id;
-  const spec = p.spec.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');
-  li.innerHTML = `<button class="row" aria-expanded="false"><span class="dot" style="background:${p.color}">${p.n}</span><span><b>${p.name}</b><small>${p.sub}</small></span><span class="h">${p.h}</span></button>
-  <div class="detail"><p>${p.text}</p><dl class="spec">${spec}</dl>${p.note?`<p class="note">${p.note}</p>`:''}${p.link?`<a href="${p.link}" target="_blank" rel="noopener">Voir la fiche produit</a>`:''}</div>`;
+  li.innerHTML = `<button class="row" aria-expanded="false"><span class="sw" style="background:${p.color}"></span><span><b>${p.name}</b><small>${p.dims.map(v=>String(v).replace('.',',')).join(' × ')} mm</small></span><span class="st ok">Rentre</span></button>
+  <div class="detail"><dl class="spec">${p.spec.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl><div class="links">${p.links.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')}</div></div>`;
   li.querySelector('.row').addEventListener('click',()=>select(selected===p.id?null:p.id,true));
   list.appendChild(li);
 });
-const tagsEl = document.getElementById('tags'); const tagEls = {};
-PARTS.forEach(p=>{ const t = document.createElement('button'); t.className='tag'; t.style.background=p.color; t.textContent=p.n; t.setAttribute('aria-label',p.name);
-  t.addEventListener('click',()=>select(p.id,true)); tagsEl.appendChild(t); tagEls[p.id]=t; });
+const form = document.getElementById('form');
+Object.keys(K).forEach(k=>{
+  const l = document.createElement('label'); l.innerHTML = `${KLABEL[k]}<input type="number" inputmode="numeric" min="1" step="1" value="${K[k]}" data-k="${k}">`;
+  form.appendChild(l);
+});
+let tmr; form.addEventListener('input', e=>{ const k = e.target.dataset.k, v = Number(e.target.value); if(!k || !(v>0)) return; K[k] = v; clearTimeout(tmr); tmr = setTimeout(build, 250); });
+
+// ---------- Vues ----------
+let view = 'xray', selected = null, showLabels = true, showDims = false;
+function applyView(v, silent){
+  const was = view; view = v;
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===v));
+  const see = v!=='closed';
+  shellMeshes.forEach(m=>{ m.material.transparent = see; m.material.opacity = see?0.16:1; m.material.depthWrite = !see; m.castShadow = !see; m.material.needsUpdate = true; });
+  decals.forEach(d=>{ d.material.transparent = true; d.material.opacity = see?0.3:1; });
+  if(cables) cables.visible = v==='xray';
+  if(!silent){ if(v==='explode' && was!=='explode') flyTo(EXP); else if(was==='explode' && v!=='explode') flyTo(HOME); }
+}
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>applyView(b.dataset.v)));
+const tL = document.getElementById('tLabels'), tD = document.getElementById('tDims');
+tL.addEventListener('click',()=>{ showLabels = !showLabels; tL.setAttribute('aria-pressed',showLabels); });
+tD.addEventListener('click',()=>{ showDims = !showDims; tD.setAttribute('aria-pressed',showDims); setDimsVisible(showDims); });
+function setDimsVisible(v){ if(!dimsGroup) return; dimsGroup.visible = v; dimsGroup.traverse(o=>{ if(o.isCSS2DObject){ o.visible = v; o.element.style.display = v?'':'none'; } }); }
+document.getElementById('tReset').addEventListener('click',()=>flyTo(view==='explode'?EXP:HOME));
+let fly = null;
+function flyTo(v){ fly = { p0:cam.position.clone(), t0:controls.target.clone(), p1:v.p.clone(), t1:v.t.clone(), k:0 }; }
 
 const HL = new THREE.Color(0x5B2BB5);
-function select(id,fromUI){
+const emissiveBackup = new Map();
+function select(id, fromUI){
   selected = id;
-  PARTS.forEach(p=>{ const li = document.getElementById('p-'+p.id); const on = p.id===id; li.classList.toggle('open',on); li.querySelector('.row').setAttribute('aria-expanded',on); tagEls[p.id].classList.toggle('on',on); });
-  Object.entries(comps).forEach(([k,c])=>c.mats.forEach(m=>{ m.emissive.copy(k===id?HL:new THREE.Color(0)); m.emissiveIntensity = k===id?0.45:0; }));
-  if(id && view==='closed' && id!=='screen') applyView('xray');
-  if(id && fromUI && window.matchMedia('(max-width:860px)').matches===false){ document.getElementById('p-'+id).scrollIntoView({block:'nearest',behavior:'smooth'}); }
+  PARTS.forEach(p=>{ const li = document.getElementById('p-'+p.id); const on = p.id===id; li.classList.toggle('open',on); li.querySelector('.row').setAttribute('aria-expanded',on); if(labels[p.id]) labels[p.id].element.firstChild.classList.toggle('on',on); });
+  Object.entries(comps).forEach(([k,c])=>c.meshes.forEach(m=>{ if(!m.material.emissive) return;
+    if(!emissiveBackup.has(m)){ m.material = m.material.clone(); emissiveBackup.set(m,true); }
+    m.material.emissive.copy(k===id?HL:new THREE.Color(0)); m.material.emissiveIntensity = k===id?0.35:0; }));
+  if(id && view==='closed' && id!=='screen' && id!=='cam') applyView('xray');
+  if(id && fromUI && !matchMedia('(max-width:900px)').matches) document.getElementById('p-'+id).scrollIntoView({block:'nearest',behavior:'smooth'});
 }
-
-// picking
 const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(); let down = null;
-canvas.addEventListener('pointerdown',e=>{ down = [e.clientX,e.clientY]; });
+canvas.addEventListener('pointerdown',e=>{ down=[e.clientX,e.clientY]; });
 canvas.addEventListener('pointerup',e=>{
   if(!down || Math.hypot(e.clientX-down[0],e.clientY-down[1])>5) return;
   const r = canvas.getBoundingClientRect(); mouse.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
   ray.setFromCamera(mouse,cam);
-  const targets = []; Object.values(comps).forEach(c=>c.g.traverse(o=>{ if(o.isMesh) targets.push(o); }));
-  const hit = ray.intersectObjects(targets,false)[0];
+  const hit = ray.intersectObjects(Object.values(comps).flatMap(c=>c.meshes),false)[0];
   select(hit?hit.object.userData.id:null,true);
 });
 
-// ---------- Loop ----------
-function resize(){ const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w,h,false); cam.aspect = w/h;
-  if(w>860) cam.setViewOffset(w,h,-w*0.08,-h*0.03,w,h); else cam.clearViewOffset();
-  cam.updateProjectionMatrix(); }
-window.addEventListener('resize',resize); resize();
-const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const v3 = new THREE.Vector3();
+// ---------- Boucle ----------
+function resize(){ const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w,h,false); labelR.setSize(w,h); cam.aspect = w/h;
+  if(w>900) cam.setViewOffset(w,h,-w*0.06,0,w,h); else cam.clearViewOffset(); cam.updateProjectionMatrix(); }
+addEventListener('resize',resize);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const tmp = new THREE.Vector3(), bb = new THREE.Box3();
 function tick(){
   requestAnimationFrame(tick);
   const k = reduce?1:0.12;
-  Object.values(comps).forEach(c=>{ v3.copy(c.base); if(view==='explode') v3.add(c.off); c.g.position.lerp(v3,k); });
-  if(fly){ fly.k = Math.min(1,fly.k+(reduce?1:0.05)); const e = 1-Math.pow(1-fly.k,3); cam.position.lerpVectors(fly.p0,fly.p1,e); controls.target.lerpVectors(fly.t0,fly.t1,e); if(fly.k>=1) fly=null; }
-  controls.update();
-  renderer.render(scene,cam);
-  const w = stage.clientWidth, h = stage.clientHeight;
-  PARTS.forEach(p=>{ const c = comps[p.id]; const b = new THREE.Box3().setFromObject(p.id==='fans'?c.g.children[1]:c.g); b.getCenter(v3); v3.project(cam);
-    const t = tagEls[p.id]; const vis = v3.z<1; t.style.display = vis?'grid':'none';
-    t.style.transform = `translate(${(v3.x*0.5+0.5)*w}px,${(-v3.y*0.5+0.5)*h}px) translate(-50%,-50%)`; });
+  Object.values(comps).forEach(c=>{ tmp.copy(c.base); if(view==='explode') tmp.add(c.off); c.g.position.lerp(tmp,k); });
+  PARTS.forEach(p=>{ const l = labels[p.id], c = comps[p.id]; if(!l||!c) return;
+    bb.setFromObject(p.id==='fans'? c.g.children[1] : c.g); bb.getCenter(tmp); tmp.y = bb.max.y; l.position.copy(tmp);
+    const hidden = !showLabels || (view==='closed' && !['screen','cam'].includes(p.id));
+    l.visible = !hidden; l.element.style.display = hidden?'none':''; });
+  if(fly){ fly.k = Math.min(1, fly.k + (reduce?1:0.045)); const e = 1-Math.pow(1-fly.k,3); cam.position.lerpVectors(fly.p0,fly.p1,e); controls.target.lerpVectors(fly.t0,fly.t1,e); if(fly.k>=1) fly=null; }
+  controls.update(); renderer.render(scene,cam); labelR.render(scene,cam);
 }
-applyView('xray');
-tick();
-})();
+resize(); build(); tick();
+window.__kiosk = { applyView, setLabels:v=>{showLabels=v;}, setDims:v=>{showDims=v; setDimsVisible(v);} };
 </script>
 </body>
 </html>
